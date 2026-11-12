@@ -16,6 +16,8 @@ Static website for TheDevPro, hosted on Vercel. Plain HTML, CSS and JS — no bu
 3. Keep `<meta name="robots" content="noindex, nofollow">` in it.
 4. Commit and push. It is live at `https://thedevpro.io/thermal/`.
 
+Personal links: add ?p=<name> (e.g. /thermal/?p=aron). An email goes to hello@thedevpro.io when that person opens the page and when they leave (n8n workflow "TheDevPro — personal link opened"). To track another proposal, add <script src="/assets/js/track.js" defer></script> before </body>.
+
 Proposals are private by design:
 - they are never linked from the site and are not in `sitemap.xml`;
 - `vercel.json` sends `X-Robots-Tag: noindex, nofollow` for every folder that is not a site page.
