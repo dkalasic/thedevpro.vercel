@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Thermal Engineering Own System Proposal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Thermal world: deep night-steel ground, heat runs ember → ice like water through a radiant loop.
+   Layout: single reading column (~1080px) with interactive bands. Single dark theme by choice. */
+:root{
+  --ground:#0a111c;
+  --panel:#111b2a;
+  --line:#22324a;
+  --ink:#e6edf5;
+  --muted:#8b9bb1;
+  --ember:#ff7a3d;
+  --ice:#6fd0f5;
+  --ok:#5fd39a;
+  --warn:#f5c04a;
+  --display:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", Roboto, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--ice)}
+h1,h2,h3{font-family:var(--display);line-height:1.12;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5.4vw,60px);font-weight:800;letter-spacing:-.02em}
+h2{font-size:clamp(26px,3.4vw,38px);font-weight:700;letter-spacing:-.01em}
+h3{font-size:19px;font-weight:700}
+p{margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:84px 0;border-top:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ember)}
+.lede{color:var(--muted);max-width:64ch;font-size:18px}
+.sec-head{display:grid;gap:14px;margin-bottom:40px}
+.heat-text{background:linear-gradient(90deg,var(--ember),#ffb36b 40%,var(--ice));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.reveal.in{animation:rise .7s cubic-bezier(.2,.7,.2,1) both}
+@keyframes rise{from{opacity:.35;transform:translateY(18px)}to{opacity:1;transform:none}}
+
+/* HERO */
+.hero{position:relative;padding:72px 0 64px;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+.hero .wrap{position:relative;display:grid;gap:22px}
+.hero .meta{display:flex;flex-wrap:wrap;gap:10px 22px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.hero .meta b{color:var(--ink);font-weight:500}
+.hero h1{max-width:18ch}
+.hero .lede{font-size:19px}
+
+/* HEARD */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;display:grid;gap:10px;align-content:start}
+.card .tag{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.card .big{font-family:var(--display);font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+.card p{color:var(--muted);font-size:15.5px}
+.card.good{border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.card.good .tag{color:var(--ok)}
+
+/* CHAIN */
+.chain{position:relative;display:grid;grid-template-columns:repeat(8,1fr);gap:10px;padding-top:26px}
+.chain::before{content:"";position:absolute;top:44px;left:4%;right:4%;height:2px;background:var(--line)}
+.chain::after{content:"";position:absolute;top:41px;left:4%;width:60px;height:8px;border-radius:8px;background:linear-gradient(90deg,transparent,var(--ember),var(--ice));filter:blur(1px);animation:pulse 5s linear infinite}
+@keyframes pulse{from{left:4%}to{left:calc(96% - 60px)}}
+.node{position:relative;z-index:1;display:grid;justify-items:center;gap:10px;text-align:center}
+.dot{width:38px;height:38px;border-radius:50%;background:var(--panel);border:2px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:13px;color:var(--muted);animation:light 5s linear infinite}
+.node:nth-child(1) .dot{animation-delay:0s}.node:nth-child(2) .dot{animation-delay:.6s}.node:nth-child(3) .dot{animation-delay:1.2s}.node:nth-child(4) .dot{animation-delay:1.8s}
+.node:nth-child(5) .dot{animation-delay:2.4s}.node:nth-child(6) .dot{animation-delay:3s}.node:nth-child(7) .dot{animation-delay:3.6s}.node:nth-child(8) .dot{animation-delay:4.2s}
+@keyframes light{0%,100%{border-color:var(--line);color:var(--muted)}6%{border-color:var(--ember);color:var(--ink);box-shadow:0 0 18px color-mix(in srgb,var(--ember) 45%,transparent)}18%{border-color:var(--line);box-shadow:none}}
+.node b{font-family:var(--display);font-size:15px}
+.node span{font-size:13px;color:var(--muted);line-height:1.4}
+.node.ask .dot{border-color:var(--ice);color:var(--ice);animation:none;box-shadow:0 0 0 6px color-mix(in srgb,var(--ice) 15%,transparent)}
+.node.ask b{color:var(--ice)}
+.callout{margin-top:36px;display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;background:var(--panel);border-left:3px solid var(--ice);padding:18px 22px;border-radius:0 10px 10px 0;max-width:820px}
+.callout .k{font-family:var(--mono);font-size:12px;color:var(--ice);text-transform:uppercase;letter-spacing:.08em;padding-top:3px}
+
+/* shared */
+.shell{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px}
+button{font:inherit;font-size:14px;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:#0d1623;color:var(--ink);padding:8px 14px;transition:border-color .2s,background .2s}
+button:hover{border-color:var(--muted)}
+button:focus-visible,.pf-row:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+.act{border-color:color-mix(in srgb,var(--ember) 60%,var(--line))}
+.act:hover{background:color-mix(in srgb,var(--ember) 12%,#0d1623)}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.scroll{overflow-x:auto}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:16px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:10px;border-radius:3px;margin-right:6px;vertical-align:middle}
+.note{font-size:13px;color:var(--muted);margin-top:14px}
+.k-team{background:linear-gradient(90deg,var(--ember),#ffa45f)}
+.k-office{background:linear-gradient(90deg,#9db4d3,#c6d6ea)}
+.k-gc{background:repeating-linear-gradient(135deg,#3a4d68 0 6px,#2c3c53 6px 12px);border:1px dashed var(--muted)}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.04em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{border-color:color-mix(in srgb,var(--ok) 60%,var(--line));color:var(--ok)}
+.pill.warn{border-color:color-mix(in srgb,var(--warn) 60%,var(--line));color:var(--warn)}
+.pill.info{border-color:color-mix(in srgb,var(--ice) 60%,var(--line));color:var(--ice)}
+
+/* PORTFOLIO */
+.pf-sum{display:flex;flex-wrap:wrap;gap:10px 26px;margin-bottom:18px;font-family:var(--mono);font-size:13px;color:var(--muted)}
+.pf-sum b{font-family:var(--display);font-size:22px;color:var(--ink);font-weight:800;margin-right:6px;font-variant-numeric:tabular-nums}
+.pf-sum .w b{color:var(--warn)}
+.pf{min-width:820px;position:relative}
+.pf-head,.pf-row{display:grid;grid-template-columns:250px 1fr 150px;align-items:center;gap:0 14px}
+.pf-head{font-family:var(--mono);font-size:11px;color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--line)}
+.pf-weeks{display:grid;grid-template-columns:repeat(12,1fr)}
+.pf-row{min-height:62px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:6px;transition:background .2s}
+.pf-row:hover{background:#0d1623}
+.pf-row[aria-current="true"]{background:color-mix(in srgb,var(--ice) 9%,var(--panel));box-shadow:inset 3px 0 0 var(--ice)}
+.pf-name{font-size:14.5px;line-height:1.3;padding:8px 0 8px 10px}
+.pf-name small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.pf-track{position:relative;height:30px;background-image:repeating-linear-gradient(90deg,transparent 0,transparent calc(8.3333% - 1px),var(--line) calc(8.3333% - 1px),var(--line) 8.3333%)}
+.seg-b{position:absolute;border-radius:3px;transition:left .7s cubic-bezier(.3,.8,.2,1),width .7s cubic-bezier(.3,.8,.2,1),opacity .4s}
+.seg-b.done{opacity:.4}
+.seg-b.now{box-shadow:0 0 0 2px var(--ink),0 0 12px color-mix(in srgb,var(--ember) 60%,transparent)}
+.seg-b.k-gc{border-width:1px}
+.pf-stat{display:grid;gap:6px;justify-items:start;padding-right:8px}
+.prog{width:100%;height:4px;border-radius:4px;background:var(--line);overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ember),var(--ice));transition:width .6s}
+.today{position:absolute;top:0;bottom:0;width:0;border-left:2px solid var(--ice);pointer-events:none;z-index:2}
+.today span{position:absolute;top:-2px;left:4px;font-family:var(--mono);font-size:10px;color:var(--ice);background:var(--panel);padding:0 3px}
+
+/* GANTT detail */
+.g-top{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;margin-bottom:14px}
+.g-title{font-family:var(--display);font-size:20px;font-weight:700}
+.g-status{display:flex;flex-wrap:wrap;gap:18px;font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:12px}
+.g-status b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.g-status .late{color:var(--warn)}
+.gantt{min-width:720px;position:relative}
+.g-row{display:grid;grid-template-columns:210px 1fr;align-items:center;min-height:38px}
+.g-label{font-size:14px;padding-right:12px;line-height:1.3}
+.g-label small{display:block;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.g-track{position:relative;height:38px;background-image:repeating-linear-gradient(90deg,transparent 0,transparent calc(12.5% - 1px),var(--line) calc(12.5% - 1px),var(--line) 12.5%)}
+.bar{position:absolute;top:8px;height:22px;border-radius:5px;transition:left .7s cubic-bezier(.3,.8,.2,1),width .7s cubic-bezier(.3,.8,.2,1),opacity .4s;display:flex;align-items:center;padding:0 8px;font-family:var(--mono);font-size:11px;color:#0a111c;white-space:nowrap;overflow:hidden}
+.bar.k-gc{color:var(--ink)}
+.bar.done{opacity:.45}
+.bar.moved{box-shadow:0 0 0 2px var(--warn)}
+.bar.new{animation:pop .6s ease}
+@keyframes pop{from{transform:scaleX(.2);opacity:.2}to{transform:none;opacity:1}}
+.g-axis{display:grid;grid-template-columns:210px 1fr;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px}
+.g-axis div:last-child{display:grid;grid-template-columns:repeat(8,1fr)}
+.g-today{position:absolute;top:0;bottom:0;border-left:2px solid var(--ice);pointer-events:none;transition:left .5s}
+.toast{min-height:24px;margin-top:12px;font-size:14px;color:var(--ok)}
+
+/* MODEL */
+.model{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;counter-reset:m}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:8px;align-content:start}
+.mbox::before{counter-increment:m;content:counter(m,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--ember)}
+.mbox p{font-size:14.5px;color:var(--muted)}
+.mbox ul{margin:0;padding-left:18px;font-size:14px;color:var(--muted)}
+
+/* OPTIONS */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.opt{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px;display:grid;gap:12px;align-content:start}
+.opt.rec{border-color:var(--ice);box-shadow:0 0 0 1px var(--ice) inset}
+.opt .pill{justify-self:start;text-transform:uppercase}
+.opt.rec .pill{border-color:var(--ice);color:var(--ice)}
+.opt p,.opt li{font-size:15px;color:var(--muted)}
+.opt ul{margin:0;padding-left:18px}
+
+/* INVESTMENT: four steps left to right, a heat line runs under them */
+.inv{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;position:relative}
+.inv .opt{position:relative;overflow:hidden}
+.inv .opt::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:100%;background:linear-gradient(90deg,var(--ember),var(--ice));transform-origin:left;transform:scaleX(.15);transition:transform .8s ease}
+.inv .opt.in::after,.inv .opt:hover::after{transform:scaleX(1)}
+
+/* INTERNAL pricing */
+.internal{background:repeating-linear-gradient(135deg,#0c1420 0 14px,#0a111c 14px 28px)}
+.int-banner{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#0a111c;background:var(--warn);padding:6px 12px;border-radius:6px;margin-bottom:22px}
+.inp-rate{max-width:420px;margin-bottom:20px}
+.inp-rate label{display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:6px}
+.inp-rate output{font-family:var(--mono);color:var(--ember)}
+input[type=range]{width:100%;accent-color:var(--ember)}
+input[type=range]:focus-visible{outline:2px solid var(--ice);outline-offset:4px}
+.tiers{width:100%;min-width:760px;border-collapse:collapse;font-size:14.5px}
+.tiers th,.tiers td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tiers thead th{font-family:var(--display);font-size:16px;color:var(--ink)}
+.tiers thead th:nth-child(3){color:var(--ice)}
+.tiers tbody th{font-weight:500;color:var(--muted);width:200px}
+.tiers td{color:var(--ink)}
+.num{font-variant-numeric:tabular-nums;font-family:var(--mono)}
+.tiers .price td{font-family:var(--display);font-size:20px;font-weight:800}
+.tiers .avg td{color:var(--ember)}
+.y,.n{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:99px;margin-right:6px}
+.y{color:var(--ok);border:1px solid color-mix(in srgb,var(--ok) 60%,var(--line))}
+.n{color:var(--muted);border:1px solid var(--line)}
+.int-grid{display:grid;grid-template-columns:1fr 2fr;gap:28px;margin-top:24px}
+.big2{font-family:var(--display);font-size:28px;font-weight:800;margin:6px 0}
+.costs{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14.5px;display:grid;gap:6px}
+.costs b{color:var(--ink);font-weight:500}
+@media (max-width:820px){.int-grid{grid-template-columns:1fr}}
+
+/* ROADMAP */
+.step{display:grid;grid-template-columns:120px 1fr;gap:24px;padding:22px 0;border-bottom:1px solid var(--line)}
+.step:last-child{border-bottom:0}
+.step .ph{font-family:var(--mono);font-size:13px;color:var(--ember);padding-top:4px}
+.step .ph small{display:block;color:var(--muted);margin-top:4px}
+.step ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:15.5px}
+.step .out{margin-top:10px;font-size:14.5px}
+.step .out b{color:var(--ice);font-weight:500}
+
+/* NEXT */
+.next{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.checklist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.checklist li{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-size:15px;display:grid;grid-template-columns:22px 1fr;gap:10px}
+.checklist li::before{content:"";width:14px;height:14px;margin-top:5px;border:2px solid var(--ice);border-radius:3px}
+.sign{display:grid;gap:12px;align-content:start}
+.sign .who{font-family:var(--display);font-size:22px;font-weight:700}
+footer{padding:36px 0 60px;border-top:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--muted)}
+
+
+/* ---- added motion ---- */
+.mnote{display:none}
+@media (max-width:700px){.mnote{display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--ember);color:#0a111c;padding:10px 14px;font-size:14px;font-weight:500;position:relative;z-index:30}.mnote button{background:transparent;border:0;color:#0a111c;font-size:16px;padding:4px 8px}.mnote.hide{display:none}}
+
+
+/* numbers */
+.cases{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
+.case{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;gap:12px;align-content:start;position:relative;overflow:hidden}
+.case::before{content:"";position:absolute;inset:0 0 auto 0;height:4px}
+.c-man::before{background:#6b7a90}.c-apps::before{background:var(--warn)}.c-con::before{background:linear-gradient(90deg,var(--ok),var(--ice))}
+.c-con{border-color:color-mix(in srgb,var(--ok) 55%,var(--line));box-shadow:0 0 40px -18px var(--ok)}
+.case-tag{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+.c-con .case-tag{color:var(--ok)}
+.case h3{font-size:22px}
+.case-sub{color:var(--muted);font-size:14px;margin-top:-6px}
+.case ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14.5px;color:var(--muted)}
+.case ul b{color:var(--ink)}
+.mbar{display:grid;gap:6px}
+.mbar span{font-size:12.5px;color:var(--muted)}
+.mtrack{position:relative;height:12px;border-radius:12px;background:#0d1623;background-image:repeating-linear-gradient(90deg,transparent 0 calc(20% - 1px),var(--line) calc(20% - 1px) 20%)}
+.mtrack i{position:absolute;top:0;bottom:0;left:var(--a);width:0;border-radius:12px;background:#6b7a90;transition:width 1.2s cubic-bezier(.2,.7,.2,1)}
+.c-con .mtrack i{background:linear-gradient(90deg,var(--ok),var(--ice));box-shadow:0 0 12px var(--ok)}
+.case.in .mtrack i{width:calc(var(--b) - var(--a))}
+.mbar b{font-family:var(--display);font-size:28px;font-weight:800}
+.c-con .mbar b{color:var(--ok)}
+.big-stat{display:grid;gap:2px}
+.big-stat b{font-family:var(--display);font-size:28px;font-weight:800;color:var(--warn)}
+.big-stat span{font-size:12.5px;color:var(--muted)}
+.ind{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:center}
+.ind-t{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.ib{display:grid;grid-template-columns:130px 1fr 54px;gap:12px;align-items:center;margin-bottom:12px}
+.ib span{font-size:14.5px}
+.ib b{font-family:var(--mono);font-size:14px;text-align:right}
+.ib-t{height:16px;border-radius:16px;background:#0d1623;overflow:hidden}
+.ib-t i{display:block;height:100%;width:0;border-radius:16px;background:var(--ice);transition:width 1.4s cubic-bezier(.2,.7,.2,1)}
+.ib-t i.lo{background:var(--ember)}
+.ib-t i.hi{background:linear-gradient(90deg,var(--ice),var(--ok))}
+.ind.in .ib-t i{width:var(--v)}
+.ind-facts{display:grid;gap:12px}
+.ind-facts div{display:grid;gap:2px;border-left:3px solid var(--ice);padding-left:12px}
+.ind-facts b{font-family:var(--display);font-size:26px;font-weight:800}
+.ind-facts span{font-size:13.5px;color:var(--muted)}
+.mcalc{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center}
+.mc-in{display:grid;gap:18px}
+.mc-r label{display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:6px}
+.mc-r output{font-family:var(--mono);color:var(--ember)}
+.mc-out{display:grid;gap:4px;text-align:center;background:linear-gradient(160deg,color-mix(in srgb,var(--ok) 16%,#0b1522),#0b1522);border:1px solid color-mix(in srgb,var(--ok) 50%,var(--line));border-radius:12px;padding:22px}
+.mc-out span{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase}
+.mc-out b{font-family:var(--display);font-size:clamp(36px,5vw,52px);font-weight:800;color:var(--ok)}
+.mc-out small{color:var(--muted);font-size:13px}
+.srcs{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:26px;font-size:13px;align-items:baseline}
+.srcs b{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.srcs a{color:var(--ice)}
+@media (prefers-reduced-motion:reduce){.case .mtrack i{width:calc(var(--b) - var(--a))}.ib-t i{width:var(--v)}}
+@media (max-width:860px){.cases,.ind,.mcalc{grid-template-columns:1fr}.ib{grid-template-columns:110px 1fr 48px}}
+
+
+/* anywhere */
+.any{display:grid;grid-template-columns:340px 1fr;gap:40px;align-items:center}
+.phone{position:relative;width:310px;height:620px;margin:0 auto;border-radius:44px;background:#05090f;border:10px solid #1b2738;box-shadow:0 30px 80px -30px color-mix(in srgb,var(--ice) 45%,transparent),0 0 0 1px #2c3c53 inset;animation:floaty 6s ease-in-out infinite}
+@keyframes floaty{50%{transform:translateY(-8px)}}
+.ph-notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:110px;height:26px;border-radius:20px;background:#000;z-index:2}
+.ph-screen{position:absolute;inset:0;border-radius:34px;overflow:hidden;background:linear-gradient(180deg,#0e1828,#0a111c);display:grid;grid-template-rows:auto auto 1fr auto;padding:44px 14px 14px;gap:10px}
+.ph-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.ph-brief{background:linear-gradient(135deg,color-mix(in srgb,var(--ember) 30%,#0b1522),#0b1522);border:1px solid color-mix(in srgb,var(--ember) 50%,var(--line));border-radius:14px;padding:10px 12px;display:grid;gap:3px;animation:dropin .7s .3s cubic-bezier(.2,.7,.2,1) both}
+.ph-brief b{font-family:var(--display);font-size:15px}
+.ph-brief span{font-size:12px;color:var(--ink);line-height:1.4}
+@keyframes dropin{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+.ph-chat{overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;gap:8px}
+.msg{max-width:88%;padding:9px 11px;border-radius:14px;font-size:12.5px;line-height:1.45;animation:rise .4s both}
+.msg.q{align-self:flex-end;background:var(--ember);color:#0a111c;border-bottom-right-radius:4px;font-weight:500}
+.msg.a{align-self:flex-start;background:#162336;border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.a b{color:var(--ok)}
+.msg.dots{display:flex;gap:4px;padding:12px}
+.msg.dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:dot 1s infinite}
+.msg.dots i:nth-child(2){animation-delay:.15s}.msg.dots i:nth-child(3){animation-delay:.3s}
+@keyframes dot{0%,100%{opacity:.3;transform:none}50%{opacity:1;transform:translateY(-3px)}}
+.ph-input{display:flex;justify-content:space-between;align-items:center;background:#0b1522;border:1px solid var(--line);border-radius:22px;padding:9px 14px;font-size:12px;color:var(--muted)}
+.ph-input i{font-style:normal;color:var(--ice)}
+.any-k{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.ask-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.ask-chip{border-radius:99px;padding:8px 14px;font-size:14px}
+.ask-chip.sel{border-color:var(--ember);background:color-mix(in srgb,var(--ember) 14%,#0d1623)}
+.any-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.any-list li{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ice);border-radius:0 8px 8px 0;padding:12px 14px;font-size:15px;color:var(--muted)}
+.any-list b{color:var(--ink)}
+.why-now{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:34px}
+.wn{background:linear-gradient(160deg,color-mix(in srgb,var(--ice) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:8px}
+.wn b{font-family:var(--display);font-size:26px;font-weight:800;background:linear-gradient(90deg,var(--ember),var(--ice));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wn span{font-size:14.5px;color:var(--muted)}
+@media (max-width:860px){.any{grid-template-columns:1fr}.why-now{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.phone{animation:none}}
+
+
+/* what we fix */
+.fix-top{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;margin-bottom:26px;align-items:stretch}
+.feed-wrap{background:#0b1522;border:1px solid var(--line);border-radius:12px;padding:16px 16px 6px;display:grid;grid-template-rows:auto 1fr}
+.feed-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink);margin-bottom:10px}
+.feed-h small{color:var(--muted);text-transform:none;letter-spacing:0}
+.live-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 var(--ok);animation:live 1.8s ease-out infinite}
+@keyframes live{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 70%,transparent)}100%{box-shadow:0 0 0 10px transparent}}
+.feed{list-style:none;margin:0;padding:0;display:grid;gap:8px;align-content:start;min-height:264px}
+.feed li{display:grid;grid-template-columns:8px 1fr auto;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;animation:slidein .5s cubic-bezier(.2,.7,.2,1) both}
+.feed li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--ice))}
+.feed li small{font-family:var(--mono);font-size:11px;color:var(--muted)}
+@keyframes slidein{from{opacity:0;transform:translateY(-12px) scale(.98)}to{opacity:1;transform:none}}
+.fix-why{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;gap:14px;align-content:center}
+.fix-why ul{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.fix-why li{position:relative;display:block;padding-left:32px;font-size:15.5px;line-height:1.5;color:var(--muted)}
+.fix-why li::before{content:"✓";position:absolute;left:0;top:2px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#0a111c;background:var(--ok)}
+.fix-why b{color:var(--ink);font-weight:600}
+.reveal.in.fix-why li{animation:rise .5s both}
+.reveal.in.fix-why li:nth-child(2){animation-delay:.1s}.reveal.in.fix-why li:nth-child(3){animation-delay:.2s}.reveal.in.fix-why li:nth-child(4){animation-delay:.3s}.reveal.in.fix-why li:nth-child(5){animation-delay:.4s}
+.fixes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.fx{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:10px;align-content:start;transition:transform .3s,border-color .3s}
+.fx:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--ok) 55%,var(--line))}
+.fx-k{font-family:var(--display);font-weight:700;font-size:17px}
+.fx p{margin:0;font-size:14.5px;line-height:1.5;display:grid;gap:3px}
+.fx p span{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em}
+.fx-t{color:var(--muted)}
+.fx-t span{color:var(--ember)}
+.fx-f{color:var(--ink)}
+.fx-f span{color:var(--ok)}
+.fx.in .fx-t{background:linear-gradient(var(--ember),var(--ember)) left 58% / 0 1px no-repeat;animation:strike .8s .3s ease forwards}
+@keyframes strike{to{background-size:100% 1px}}
+.fx.in .fx-f{animation:rise .6s .5s both}
+
+/* support */
+.sup-race{display:grid;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px;margin-bottom:20px}
+.sr{display:grid;grid-template-columns:200px 1fr 100px;gap:14px;align-items:center}
+.sr-l{font-size:14.5px}
+.sr-b{height:14px;border-radius:14px;background:#0d1623;overflow:hidden}
+.sr-b i{display:block;height:100%;border-radius:14px;width:0}
+.sr-v{font-family:var(--display);font-size:18px;text-align:right;color:var(--muted)}
+.sr-v.ok{color:var(--ok)}
+.sr-us{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+.sr-them{background:linear-gradient(90deg,#7b2f12,var(--ember))}
+.sr-wk{background:repeating-linear-gradient(135deg,var(--ember) 0 8px,#7b2f12 8px 16px)}
+.sup-race.in .sr-us{animation:fill1 .9s .2s ease forwards}
+.sup-race.in .sr-them{animation:fill2 2s .2s ease forwards}
+.sup-race.in .sr-wk{animation:fill3 2.8s .2s ease forwards}
+@keyframes fill1{to{width:12%}}
+@keyframes fill2{to{width:60%}}
+@keyframes fill3{to{width:100%}}
+.sup-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (prefers-reduced-motion:reduce){.sr-us{width:12%}.sr-them{width:60%}.sr-wk{width:100%}}
+@media (max-width:820px){.fix-top,.fixes,.sup-cards{grid-template-columns:1fr}.sr{grid-template-columns:1fr 80px}.sr-l{grid-column:1/-1}}
+@media (min-width:821px) and (max-width:1000px){.fixes{grid-template-columns:1fr 1fr}}
+
+/* hero before/after */
+.ba{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:1040px;margin-top:6px}
+.ba-i{background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:8px}
+.ba-k{font-family:var(--mono);font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.ba-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ba-row s{color:var(--muted);font-size:14px;text-decoration-color:var(--ember)}
+.ba-row b{font-family:var(--display);font-size:22px;color:var(--ok)}
+.ba-bar{height:6px;border-radius:6px;background:linear-gradient(90deg,var(--ember),#ffa45f);position:relative;overflow:hidden}
+.ba-bar i{position:absolute;z-index:1;inset:0 auto 0 0;width:var(--w);background:var(--ok);border-radius:6px;box-shadow:0 0 10px var(--ok)}
+.ba-bar::after{content:"";position:absolute;inset:0;background:var(--line);transform-origin:right;animation:wipe 1.6s cubic-bezier(.6,0,.2,1) .8s both}
+@keyframes wipe{from{transform:scaleX(0)}to{transform:scaleX(.92)}}
+.hero-cta{color:#0a111c;background:var(--ember);padding:6px 14px;border-radius:99px;text-decoration:none;font-family:var(--body);font-weight:600;font-size:14px;box-shadow:0 0 0 0 var(--ember);animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ember) 60%,transparent)}100%{box-shadow:0 0 0 14px transparent}}
+.topnav a.cta{background:var(--ember);color:#0a111c;border-color:var(--ember);font-weight:600}
+
+/* tabs */
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tabs button{border-radius:99px;padding:10px 18px}
+.tabs button[aria-selected="true"]{border-color:var(--ice);background:color-mix(in srgb,var(--ice) 15%,#0d1623)}
+.pane[hidden]{display:none}
+.pane:not([hidden]){animation:rise .5s cubic-bezier(.2,.7,.2,1) both}
+
+/* PO demo */
+.po{display:grid;grid-template-columns:260px 1fr;gap:22px;min-height:260px}
+.po-steps{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:ps;align-content:start}
+.po-steps li{counter-increment:ps;display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font-size:14.5px;color:var(--muted);transition:all .35s}
+.po-steps li::before{content:counter(ps);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;border:1px solid var(--line)}
+.po-steps li.on{color:var(--ink);border-color:var(--ember);background:color-mix(in srgb,var(--ember) 10%,transparent)}
+.po-steps li.on::before{background:var(--ember);color:#0a111c;border-color:var(--ember)}
+.po-steps li.done{color:var(--ink)}
+.po-steps li.done::before{content:"✓";background:var(--ok);color:#0a111c;border-color:var(--ok)}
+.po-screen{background:#0b1522;border:1px solid var(--line);border-radius:10px;padding:18px;position:relative;overflow:hidden}
+.po-screen::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--ember),var(--ice))}
+.scr{animation:rise .45s cubic-bezier(.2,.7,.2,1) both;display:grid;gap:10px}
+.scr h4{margin:0;font-family:var(--display);font-size:17px}
+.scr .tag2{font-family:var(--mono);font-size:11px;color:var(--ice);text-transform:uppercase;letter-spacing:.06em}
+.scr table{width:100%;border-collapse:collapse;font-size:14px}
+.scr td{padding:7px 8px;border-bottom:1px solid var(--line)}
+.scr td.r{text-align:right;font-family:var(--mono)}
+.sup{display:flex;gap:10px;flex-wrap:wrap}
+.sup div{flex:1;min-width:160px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px}
+.sup div.pick{border-color:var(--ok);box-shadow:0 0 18px -8px var(--ok)}
+.sup small{display:block;color:var(--muted);font-family:var(--mono);font-size:11px}
+.okmsg{display:flex;gap:12px;align-items:center;border:1px solid var(--ok);border-radius:10px;padding:14px;background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.okmsg i{width:34px;height:34px;border-radius:50%;background:var(--ok);display:grid;place-items:center;color:#0a111c;font-style:normal;font-weight:700;flex:none}
+.po-foot{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.po-clock span{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase}
+.po-clock b{font-family:var(--display);font-size:34px;font-weight:800}
+.po-bars{display:grid;gap:8px}
+.po-bars>div{display:grid;grid-template-columns:130px 1fr 70px;gap:10px;align-items:center;font-size:13.5px}
+.po-bars b{font-family:var(--mono);font-size:13px;text-align:right}
+.pb{height:10px;border-radius:10px;background:#0d1623;overflow:hidden}
+.pb i{display:block;height:100%;border-radius:10px}
+.today-bar{width:100%;background:linear-gradient(90deg,#7b2f12,var(--ember))}
+.new-bar{width:0;background:var(--ok);transition:width .8s ease}
+
+/* bid demo */
+.bid-top{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:14px}
+.bid-slide{min-width:260px}
+.bid-slide label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.bid-slide output{font-family:var(--mono);color:var(--ember)}
+table.bid{width:100%;border-collapse:collapse;font-size:14.5px;min-width:720px}
+.bid th,.bid td{padding:10px 10px;border-bottom:1px solid var(--line);text-align:left}
+.bid thead th{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:500}
+.bid .r{text-align:right;font-variant-numeric:tabular-nums}
+.bid td.num{font-family:var(--mono)}
+.bid tbody tr{animation:rise .5s both}
+.bid .up{color:var(--warn)}.bid .dn{color:var(--ok)}
+.flag{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.flag.miss{border-color:var(--warn);color:var(--warn)}
+.flag.good{border-color:var(--ok);color:var(--ok)}
+.bid tfoot th{font-family:var(--display);font-size:17px;border-bottom:0}
+#bid-verdict{font-family:var(--body);font-size:14px;font-weight:500}
+.gaps{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.gap{background:#0b1522;border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:10px 14px;font-size:14px;max-width:520px}
+.gap b{color:var(--warn)}
+
+/* KPI demo */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.kpi{display:grid;gap:4px;text-align:left;padding:16px;border-radius:10px;background:#0b1522}
+.kpi span{font-family:var(--mono);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.kpi b{font-family:var(--display);font-size:34px;font-weight:800}
+.kpi svg{width:100%;height:28px}
+.kpi polyline{fill:none;stroke:var(--ice);stroke-width:2;stroke-dasharray:200;stroke-dashoffset:0}
+.kpis.go polyline{animation:draw 1.4s ease both}
+@keyframes draw{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+.kpi.sel{border-color:var(--ember);box-shadow:0 0 22px -8px var(--ember)}
+.kpi-src{margin-top:14px;background:#0b1522;border:1px solid var(--line);border-left:3px solid var(--ice);border-radius:0 8px 8px 0;padding:14px 16px;font-size:15px;color:var(--muted);min-height:54px}
+.kpi-src b{color:var(--ink)}
+
+/* your own system */
+.safe{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sf{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;display:grid;gap:8px;align-content:start;position:relative;overflow:hidden}
+.sf::after{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--ok),var(--ice));transform:scaleX(.12);transform-origin:left;transition:transform .9s ease}
+.sf.in::after,.sf:hover::after{transform:scaleX(1)}
+.sf-n{font-family:var(--mono);font-size:12px;color:var(--ok)}
+.sf p{font-size:15px;color:var(--muted)}
+table.cmp{width:100%;border-collapse:collapse;font-size:15px;min-width:680px}
+.cmp th,.cmp td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp thead th{font-family:var(--display);font-size:17px}
+.cmp tbody th{font-weight:500;color:var(--muted);width:200px}
+.cmp td{color:var(--muted)}
+.cmp .mine{color:var(--ink);background:color-mix(in srgb,var(--ok) 8%,transparent)}
+.cmp thead .mine{color:var(--ok)}
+.reveal.in .cmp tbody tr{animation:rise .5s both}
+.reveal.in .cmp tbody tr:nth-child(2){animation-delay:.08s}.reveal.in .cmp tbody tr:nth-child(3){animation-delay:.16s}.reveal.in .cmp tbody tr:nth-child(4){animation-delay:.24s}.reveal.in .cmp tbody tr:nth-child(5){animation-delay:.32s}.reveal.in .cmp tbody tr:nth-child(6){animation-delay:.4s}
+
+/* office server */
+.of-ctrl{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.of-ctrl button[aria-pressed="true"]{border-color:var(--ice);background:color-mix(in srgb,var(--ice) 14%,#0d1623)}
+.of-map{display:grid;grid-template-columns:1fr 1.2fr 1fr;grid-template-rows:auto auto;gap:18px 0;align-items:center}
+.of-node{border:2px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:2px;position:relative;background:#0b1522;transition:all .5s}
+.of-node b{font-family:var(--display)}
+.of-node small{color:var(--muted);font-size:12.5px}
+.of-node .st{position:absolute;top:12px;right:12px;width:10px;height:10px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+.of-link{position:relative;height:40px}
+.of-link::before{content:"";position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line)}
+.of-link i{position:absolute;top:calc(50% - 4px);width:10px;height:10px;border-radius:50%;background:var(--ice);box-shadow:0 0 10px var(--ice);animation:pk 2.6s linear infinite}
+.of-link i:nth-child(2){animation-delay:1.3s}
+.of-x{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(0);color:var(--warn);font-size:22px;font-weight:700;transition:transform .3s}
+.of-team{grid-column:1 / -1;justify-self:center;border:1px dashed var(--muted);border-radius:99px;padding:8px 18px;display:flex;gap:10px;align-items:baseline;transition:all .5s}
+.of-team small{color:var(--ice);font-family:var(--mono);font-size:12px}
+.office[data-state="normal"] .of-cloud{border-color:var(--ember);box-shadow:0 0 26px -10px var(--ember)}
+.office[data-state="net"] .of-link i,.office[data-state="cloud"] .of-link i{animation-play-state:paused;opacity:0}
+.office[data-state="net"] .of-x,.office[data-state="cloud"] .of-x{transform:translate(-50%,-50%) scale(1)}
+.office[data-state="net"] .of-box,.office[data-state="cloud"] .of-box{border-color:var(--ok);box-shadow:0 0 30px -8px var(--ok)}
+.office[data-state="cloud"] .of-cloud .st{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+.office[data-state="cloud"] .of-cloud{opacity:.55}
+.office[data-state="net"] .of-team,.office[data-state="cloud"] .of-team{border-color:var(--ok)}
+.of-msg{margin:16px 0 0;font-size:15.5px;min-height:48px}
+.hw{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px;padding-top:18px;border-top:1px solid var(--line)}
+.hw ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:15px;display:grid;gap:4px}
+
+/* quote */
+.q-wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:start}
+.q-pick{display:flex;gap:8px;margin-bottom:16px}
+.q-pick button[aria-pressed="true"]{border-color:var(--ember);background:color-mix(in srgb,var(--ember) 14%,#0d1623)}
+.q-rows{display:grid;gap:4px}
+.q-r{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid var(--line)}
+.q-r span{color:var(--muted)}
+.q-r b{font-family:var(--display);font-size:26px;font-weight:800}
+.q-r.big b{font-size:clamp(34px,4.6vw,46px);background:linear-gradient(90deg,var(--ember),var(--ice));-webkit-background-clip:text;background-clip:text;color:transparent}
+.q-side{display:grid;gap:12px}
+.q-c{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:4px}
+.q-c b{font-family:var(--display)}
+.q-c span{font-family:var(--mono);color:var(--ice);font-size:14px}
+.q-c small{color:var(--muted);font-size:13.5px;line-height:1.45}
+
+/* reply */
+.reply{display:grid;gap:18px;max-width:720px}
+.rf-row{display:grid;gap:8px;border:0;margin:0;padding:0}
+.rf-row>label,.rf-row legend{font-size:14px;color:var(--muted);padding:0}
+.reply input[type=text],.reply textarea{font:inherit;color:var(--ink);background:#0b1522;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.reply input[type=text]:focus-visible,.reply textarea:focus-visible{outline:2px solid var(--ice);outline-offset:1px}
+.ch{display:inline-flex;gap:8px;align-items:center;margin-right:18px;font-size:15px;cursor:pointer}
+.ch input{accent-color:var(--ember);width:16px;height:16px}
+.send{justify-self:start;background:var(--ember);color:#0a111c;border-color:var(--ember);font-weight:600;padding:12px 22px;font-size:15px}
+.send:hover{background:#ff8d58}
+
+@media (max-width:820px){
+  .ba,.kpis,.safe{grid-template-columns:1fr 1fr}
+  .po{grid-template-columns:1fr}
+  .po-foot{grid-template-columns:1fr}
+  .of-map{grid-template-columns:1fr;gap:10px}
+  .of-link{height:30px}
+  .hw,.q-wrap{grid-template-columns:1fr}
+}
+@media (max-width:480px){.ba,.kpis,.safe{grid-template-columns:1fr}}
+
+.topnav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.topnav .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:10px;padding-bottom:10px;flex-wrap:wrap}
+.topnav .brand{font-family:var(--display);font-weight:700;font-size:15px}
+.topnav .brand em{font-style:normal;color:var(--muted);font-weight:500}
+.topnav .links{display:flex;gap:6px;flex-wrap:wrap}
+.topnav a{font-size:14px;color:var(--ink);text-decoration:none;padding:6px 12px;border-radius:99px;border:1px solid var(--line);transition:border-color .2s,background .2s}
+.topnav a:hover,.topnav a:focus-visible{border-color:var(--ice);background:color-mix(in srgb,var(--ice) 12%,transparent);outline:none}
+html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:60px}
+.sub{font-family:var(--display);font-size:22px;margin:44px 0 16px}
+.copies{display:grid;grid-template-columns:200px 1fr 280px;align-items:center;gap:0;margin:10px 0 8px}
+.cp-src{background:var(--panel);border:2px solid var(--ember);border-radius:12px;padding:18px;display:grid;gap:4px;box-shadow:0 0 30px -10px var(--ember)}
+.cp-src b{font-family:var(--display);font-size:18px}.cp-src span{font-size:13px;color:var(--muted)}
+.cp-ic{color:var(--ember);animation:beat 1.6s ease-in-out infinite}
+@keyframes beat{50%{opacity:.3}}
+.cp-flow{position:relative;height:120px}
+.cp-flow::before,.cp-flow::after{content:"";position:absolute;left:0;right:0;height:2px;background:var(--line)}
+.cp-flow::before{top:28%}.cp-flow::after{top:72%}
+.cp-flow i{position:absolute;width:10px;height:10px;border-radius:50%;left:0;animation:pk 2.8s linear infinite}
+.cp-flow i:nth-child(1){top:calc(28% - 4px);background:var(--ice);box-shadow:0 0 10px var(--ice)}
+.cp-flow i:nth-child(2){top:calc(72% - 4px);background:var(--ok);box-shadow:0 0 10px var(--ok);animation-delay:.9s}
+.cp-flow i:nth-child(3){top:calc(28% - 4px);background:var(--ice);box-shadow:0 0 10px var(--ice);animation-delay:1.8s}
+@keyframes pk{from{left:0;opacity:0}10%{opacity:1}90%{opacity:1}to{left:calc(100% - 10px);opacity:0}}
+.cp-dst{display:grid;gap:14px}
+.cp{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:grid;gap:2px}
+.cp b{font-family:var(--display)}.cp span{font-size:13px;color:var(--muted)}
+.cp.ours{border-color:color-mix(in srgb,var(--ice) 60%,var(--line))}
+.cp.yours{border-color:var(--ok);box-shadow:0 0 24px -10px var(--ok)}
+.cp.yours b{color:var(--ok)}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.role{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;gap:8px;align-content:start;animation:flow 7.2s linear infinite}
+.role:nth-child(2){animation-delay:1.2s}.role:nth-child(3){animation-delay:2.4s}.role:nth-child(4){animation-delay:3.6s}.role:nth-child(5){animation-delay:4.8s}.role:nth-child(6){animation-delay:6s}
+.role .rn{font-family:var(--mono);font-size:12px;color:var(--ember)}
+.role p{font-size:14.5px;color:var(--muted)}
+.role .where{justify-self:start;font-family:var(--mono);font-size:11px;color:var(--ice);border:1px solid color-mix(in srgb,var(--ice) 50%,var(--line));border-radius:99px;padding:2px 9px}
+.bk-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;margin-top:44px;align-items:start}
+.bk-table{width:100%;border-collapse:collapse;font-size:14.5px;min-width:480px}
+.bk-table th,.bk-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.bk-table th{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.bk-table tbody tr{transition:background .2s}
+.bk-table tbody tr:hover{background:#0d1623}
+.promises{display:grid;gap:10px}
+.pr{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.pr b{font-family:var(--display);font-size:20px;color:var(--ok)}
+.pr span{font-size:14px;color:var(--muted)}
+.who td:not(:first-child),.who th:not(:first-child){text-align:center;width:170px}
+.ck{display:inline-block;width:20px;height:20px;border-radius:50%;background:color-mix(in srgb,var(--ok) 25%,transparent);border:2px solid var(--ok);position:relative}
+.ck::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid var(--ok);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.reveal.in .ck{animation:pop .5s ease both}
+.reveal.in tr:nth-child(2) .ck{animation-delay:.1s}.reveal.in tr:nth-child(3) .ck{animation-delay:.2s}.reveal.in tr:nth-child(4) .ck{animation-delay:.3s}.reveal.in tr:nth-child(5) .ck{animation-delay:.4s}.reveal.in tr:nth-child(6) .ck{animation-delay:.5s}
+@media (max-width:820px){.copies{grid-template-columns:1fr}.cp-flow{height:60px}.bk-grid{grid-template-columns:1fr}}
+
+.pipe-line{position:relative;margin:8px 0 28px}
+.pl-track{position:absolute;left:8%;right:8%;top:14px;height:2px;background:var(--line)}
+.pl-dot{position:absolute;top:-5px;left:0;width:12px;height:12px;border-radius:50%;background:var(--ice);box-shadow:0 0 14px var(--ice);animation:pl 6s linear infinite}
+@keyframes pl{0%{left:0;background:var(--ice)}70%{background:var(--ember);box-shadow:0 0 14px var(--ember)}100%{left:calc(100% - 12px);background:var(--ok);box-shadow:0 0 14px var(--ok)}}
+.pl-steps{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;position:relative}
+.pl{display:grid;justify-items:center;text-align:center;gap:6px;padding-top:0}
+.pl::before{content:"";width:30px;height:30px;border-radius:50%;background:var(--panel);border:2px solid var(--line);animation:plnode 6s linear infinite}
+.pl:nth-child(1)::before{animation-delay:0s}.pl:nth-child(2)::before{animation-delay:1s}.pl:nth-child(3)::before{animation-delay:2s}.pl:nth-child(4)::before{animation-delay:3s}.pl:nth-child(5)::before{animation-delay:4s}.pl:nth-child(6)::before{animation-delay:5s}
+@keyframes plnode{0%,100%{border-color:var(--line);background:var(--panel)}4%{border-color:var(--ice);background:color-mix(in srgb,var(--ice) 30%,var(--panel))}20%{border-color:var(--line);background:var(--panel)}}
+.pl b{font-family:var(--display);font-size:15px}
+.pl span{font-size:12.5px;color:var(--muted);line-height:1.35}
+.pl.live b{color:var(--ember)}
+.pl.bk b{color:var(--ok)}
+.infra-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.infra-cards p{font-size:15px;color:var(--muted)}
+.infra-cards ul{margin:0;padding-left:18px;color:var(--muted);font-size:15px}
+@media (max-width:820px){.pl-steps{grid-template-columns:repeat(3,1fr);row-gap:20px}.pl-track{display:none}}
+
+.nodate{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;margin-bottom:24px}
+.nodate h3{margin:10px 0 8px}
+.nodate p{color:var(--muted);font-size:15.5px}
+.weeks{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.weeks span{display:grid;gap:6px;justify-items:center;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.weeks i{display:block;width:100%;height:28px;border-radius:5px;background:#0d1623;border:1px solid var(--line)}
+.nodate.in .weeks i{animation:wk 6s linear infinite}
+.nodate.in .weeks span:nth-child(1) i{animation-delay:0.00s}.nodate.in .weeks span:nth-child(2) i{animation-delay:0.40s}.nodate.in .weeks span:nth-child(3) i{animation-delay:0.80s}.nodate.in .weeks span:nth-child(4) i{animation-delay:1.20s}.nodate.in .weeks span:nth-child(5) i{animation-delay:1.60s}.nodate.in .weeks span:nth-child(6) i{animation-delay:2.00s}.nodate.in .weeks span:nth-child(7) i{animation-delay:2.40s}.nodate.in .weeks span:nth-child(8) i{animation-delay:2.80s}.nodate.in .weeks span:nth-child(9) i{animation-delay:3.20s}.nodate.in .weeks span:nth-child(10) i{animation-delay:3.60s}.nodate.in .weeks span:nth-child(11) i{animation-delay:4.00s}.nodate.in .weeks span:nth-child(12) i{animation-delay:4.40s}
+@keyframes wk{0%{background:#0d1623;border-color:var(--line)}8%{background:linear-gradient(135deg,var(--ember),#ffa45f);border-color:var(--ember)}70%{background:linear-gradient(135deg,var(--ember),#ffa45f);border-color:var(--ember)}90%,100%{background:#0d1623;border-color:var(--line)}}
+@media (max-width:820px){.nodate{grid-template-columns:1fr}}
+
+.reveal.in .eyebrow::after{content:"";display:block;width:56px;height:2px;margin-top:10px;background:linear-gradient(90deg,var(--ember),var(--ice));transform-origin:left;animation:sweep .9s .2s cubic-bezier(.2,.7,.2,1) both}
+@keyframes sweep{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.card{transition:transform .3s,border-color .3s,box-shadow .3s}
+.card:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--ember) 50%,var(--line));box-shadow:0 10px 30px -12px color-mix(in srgb,var(--ember) 40%,transparent)}
+.mbox{animation:flow 7.2s linear infinite}
+.mbox:nth-child(1){animation-delay:0s}.mbox:nth-child(2){animation-delay:1.2s}.mbox:nth-child(3){animation-delay:2.4s}.mbox:nth-child(4){animation-delay:3.6s}.mbox:nth-child(5){animation-delay:4.8s}.mbox:nth-child(6){animation-delay:6s}
+@keyframes flow{0%,100%{border-color:var(--line);box-shadow:none}5%{border-color:var(--ember);box-shadow:0 0 22px -6px color-mix(in srgb,var(--ember) 55%,transparent)}16%{border-color:var(--line);box-shadow:none}}
+.sync{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--ink)}
+.pipe{position:relative;flex:1;height:2px;background:var(--line)}
+.pipe i{position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--ice);animation:go 2.4s linear infinite}
+.pipe i:nth-child(2){animation-delay:1.2s}
+.pipe i.back{background:var(--ember);animation:goback 2.4s .6s linear infinite}
+@keyframes go{from{left:0}to{left:calc(100% - 8px)}}
+@keyframes goback{from{left:calc(100% - 8px)}to{left:0}}
+.today{animation:glow 2.4s ease-in-out infinite}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 12px 1px color-mix(in srgb,var(--ice) 70%,transparent)}}
+.road{position:relative;padding-left:28px}
+.road-line{position:absolute;left:0;top:28px;bottom:28px;width:2px;background:var(--line)}
+.road-line i{display:block;width:100%;height:0;background:linear-gradient(var(--ember),var(--ice));transition:height .2s linear}
+.step{position:relative}
+.step::before{content:"";position:absolute;left:-33px;top:28px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:2px solid var(--line);transition:border-color .4s,background .4s,box-shadow .4s}
+.step.lit::before{border-color:var(--ember);background:var(--ember);box-shadow:0 0 14px color-mix(in srgb,var(--ember) 60%,transparent)}
+.cycle-wrap{display:grid;grid-template-columns:320px 1fr;gap:36px;align-items:center;margin-bottom:24px}
+.cycle svg{width:100%;max-width:320px;overflow:visible}
+.cycle .spin{transform-origin:150px 150px;animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cn circle{fill:var(--panel);stroke:var(--line);stroke-width:2;animation:node 8s linear infinite}
+.cn text{fill:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:12px}
+.c1 circle{animation-delay:0s}.c2 circle{animation-delay:2s}.c3 circle{animation-delay:4s}.c4 circle{animation-delay:6s}
+@keyframes node{0%,100%{stroke:var(--line);fill:var(--panel)}3%{stroke:var(--ember);fill:var(--ember)}20%{stroke:var(--line);fill:var(--panel)}}
+.ct1{fill:var(--ink);font-family:"Archivo",sans-serif;font-weight:800;font-size:22px}
+.terms{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.terms li{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--ember);border-radius:0 8px 8px 0;padding:14px 16px;display:grid;gap:4px}
+.terms b{font-family:var(--display);font-size:16px}
+.terms span{font-size:14.5px;color:var(--muted)}
+.terms li:nth-child(2).in{animation-delay:.08s}.terms li:nth-child(3).in{animation-delay:.16s}.terms li:nth-child(4).in{animation-delay:.24s}.terms li:nth-child(5).in{animation-delay:.32s}.terms li:nth-child(6).in{animation-delay:.4s}
+.opt.own{max-width:720px;border-color:color-mix(in srgb,var(--ice) 55%,var(--line))}
+.checklist li{transition:transform .3s}
+.reveal.in .checklist li{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+.reveal.in .checklist li:nth-child(2){animation-delay:.1s}.reveal.in .checklist li:nth-child(3){animation-delay:.2s}.reveal.in .checklist li:nth-child(4){animation-delay:.3s}.reveal.in .checklist li:nth-child(5){animation-delay:.4s}
+@media (max-width:820px){.cycle-wrap{grid-template-columns:1fr}.cycle{max-width:280px;margin:0 auto}.terms{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.road-line i{height:100%!important}}
+
+@media (max-width:820px){
+  .chain{grid-template-columns:repeat(2,1fr);row-gap:26px}
+  .chain::before,.chain::after{display:none}
+  .next{grid-template-columns:1fr}
+  .step{grid-template-columns:1fr;gap:6px}
+  section{padding:64px 0}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .hero canvas{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="mnote" id="mobile-note" role="note"><span>This proposal has interactive demos and looks best on a computer or tablet.</span><button type="button" id="mnote-x" aria-label="Close">✕</button></div>
+<nav class="topnav" aria-label="Sections"><div class="wrap"><span class="brand">SoloDevPro <em>for</em> Thermal Engineering</span><div class="links"><a href="#top">Overview</a><a href="#fix">What we fix</a><a href="#numbers">The numbers</a><a href="#demos">Live demos</a><a href="#anywhere">From anywhere</a><a href="#yours">Your own system</a><a href="#support">Support</a><a href="#hosting">Hosting &amp; backup</a><a href="#reply" class="cta">Reply</a></div></div></nav>
+<header class="hero" id="top">
+  <canvas id="loop" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="eyebrow">Prepared for Aron and the Thermal Engineering team</div>
+    <h1>Your own system, built around <span class="heat-text">how Thermal Engineering works.</span></h1>
+    <p class="lede">No more forgotten estimates, missed deadlines or managers finding out too late. One place for projects, schedules, estimates, purchase orders and reports. Every manager answers with real numbers, and every decision rests on what is actually happening in the field and in the office.</p>
+    <div class="ba" aria-label="Before and after">
+      <div class="ba-i"><span class="ba-k">Create a purchase order</span><div class="ba-row"><s>about 1 hour</s><b>about 5 min</b></div><div class="ba-bar"><i style="--w:8%"></i></div></div>
+      <div class="ba-i"><span class="ba-k">Answer a competing bid</span><div class="ba-row"><s>2 hours to a day</s><b>minutes</b></div><div class="ba-bar"><i style="--w:6%"></i></div></div>
+      <div class="ba-i"><span class="ba-k">Get support</span><div class="ba-row"><s>6–12 h ticket</s><b>under 2 h</b></div><div class="ba-bar"><i style="--w:12%"></i></div></div>
+      <div class="ba-i"><span class="ba-k">Report a KPI</span><div class="ba-row"><s>hunting across apps</s><b>one click</b></div><div class="ba-bar"><i style="--w:4%"></i></div></div>
+    </div>
+    <div class="meta">
+      <span>By <b>SoloDevPro</b> · Daniel Kalasic</span>
+      <span>November 2026</span>
+      <a class="hero-cta" href="#reply">Reply to this proposal</a>
+    </div>
+  </div>
+</header>
+
+<section id="heard">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">What we heard</div>
+      <h2>Great work in the field, slowed down by too many tools.</h2>
+      <p class="lede">From our conversations with you and your managers, and from how you present yourselves: luxury residential and commercial radiant, snowmelt, HVAC and plumbing, across the Wasatch Front, with 24/7 service on top.</p>
+    </div>
+    <div class="cards">
+      <div class="card reveal"><span class="tag">Today</span><span class="big" data-count="10" data-suffix="–12">10–12</span><p>separate apps (Monday and others) for projects, estimates, accounting and quotes. Each one costs money, and none of them talk to each other.</p></div>
+      <div class="card reveal"><span class="tag">Purchase orders</span><span class="big">1 hour</span><p>to create a PO that should take 5 minutes, before anyone even drives out for the material.</p></div>
+      <div class="card reveal"><span class="tag">Competing bids</span><span class="big">Up to 1 day</span><p>to review a client's other proposal line by line, check materials and decide how to improve the offer.</p></div>
+      <div class="card reveal"><span class="tag">Reports &amp; KPIs</span><span class="big">Guesswork</span><p>Managers are asked for numbers they can't pull, because the data lives in too many places.</p></div>
+      <div class="card reveal"><span class="tag">The ask</span><span class="big">Schedules</span><p>Project schedules with phases that change as the job changes, and every project visible at once.</p></div>
+      <div class="card good reveal"><span class="tag">Good news</span><span class="big">No inventory</span><p>Materials are bought per job, so we tie them straight to the estimate, each phase and each PO.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="fix">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">What we fix</div>
+      <h2>Nothing falls through the cracks again.</h2>
+      <p class="lede">A business that designs, installs and services radiant, snowmelt, HVAC and plumbing systems across seven counties, 24/7, has hundreds of moving parts. Today too many of them depend on someone remembering. Your system remembers for you.</p>
+    </div>
+    <div class="fix-top">
+      <div class="feed-wrap reveal">
+        <div class="feed-h"><span class="live-dot"></span>Today's alerts <small>example</small></div>
+        <ul class="feed" id="feed" aria-live="off"></ul>
+      </div>
+      <div class="fix-why reveal">
+        <h3>The system watches the details, so your people can do the work.</h3>
+        <ul>
+          <li><b>Every estimate</b> gets followed up</li>
+          <li><b>Every deadline</b> gets a reminder before it's due</li>
+          <li><b>Every manager</b> sees all of their projects, every day</li>
+          <li><b>Every finished phase</b> gets invoiced</li>
+          <li><b>Every installed system</b> gets its next tune-up date</li>
+        </ul>
+      </div>
+    </div>
+    <div class="fixes"><div class="fx reveal"><span class="fx-k">Estimates</span><p class="fx-t"><span>Today</span>An estimate goes out and nobody follows up. The job goes to someone else.</p><p class="fx-f"><span>Fixed</span>Every estimate has a follow-up date. Anything unanswered for 7 days lands on the owner's list.</p></div><div class="fx reveal"><span class="fx-k">Deadlines</span><p class="fx-t"><span>Today</span>A phase date, a builder milestone or a pour date gets missed because it lived in someone's head.</p><p class="fx-f"><span>Fixed</span>Every date sits on the schedule, with a reminder before it is due and an alert when it slips.</p></div><div class="fx reveal"><span class="fx-k">Managers</span><p class="fx-t"><span>Today</span>Managers don't see every project at the same time, so problems show up late.</p><p class="fx-f"><span>Fixed</span>Each manager opens one screen with all of their projects, today's phases and what is at risk.</p></div><div class="fx reveal"><span class="fx-k">Permits &amp; inspections</span><p class="fx-t"><span>Today</span>Seven counties, seven sets of rules. An inspection that isn't booked holds up the whole job.</p><p class="fx-f"><span>Fixed</span>Permits and inspections are tracked per phase and per county, with reminders to book and to confirm.</p></div><div class="fx reveal"><span class="fx-k">24/7 emergencies</span><p class="fx-t"><span>Today</span>An emergency call pulls a crew off a project, and the schedule never finds out.</p><p class="fx-f"><span>Fixed</span>Service calls appear on the crew calendar, so everyone sees which project moves and by how much.</p></div><div class="fx reveal"><span class="fx-k">Seasonal tune-ups</span><p class="fx-t"><span>Today</span>Boiler and snowmelt clients don't get called before winter, and that work is left on the table.</p><p class="fx-f"><span>Fixed</span>Every installed system gets its tune-up date. Before the season, the list of who to call is ready.</p></div><div class="fx reveal"><span class="fx-k">Warranty</span><p class="fx-t"><span>Today</span>Warranty dates and what was installed where are hard to find years later.</p><p class="fx-f"><span>Fixed</span>Each job keeps its equipment, photos and warranty dates. Search the address and it's all there.</p></div><div class="fx reveal"><span class="fx-k">Billing</span><p class="fx-t"><span>Today</span>A phase is finished, but nobody invoices it for days or weeks.</p><p class="fx-f"><span>Fixed</span>A finished phase creates its progress invoice and sends it to QuickBooks. Unbilled work shows up on the dashboard.</p></div><div class="fx reveal"><span class="fx-k">Builders</span><p class="fx-t"><span>Today</span>Builders call and text to ask where things stand, and someone has to stop and look it up.</p><p class="fx-f"><span>Fixed</span>Status per phase is always current, so anyone in the office can answer in seconds.</p></div><div class="fx reveal"><span class="fx-k">Job knowledge</span><p class="fx-t"><span>Today</span>Notes, photos and decisions live in texts and personal phones.</p><p class="fx-f"><span>Fixed</span>Notes, photos and sign-offs are saved on the project, so the knowledge stays with the company.</p></div><div class="fx reveal"><span class="fx-k">Purchase orders</span><p class="fx-t"><span>Today</span>About an hour to create a PO, before anyone drives out for the material.</p><p class="fx-f"><span>Fixed</span>POs are built from the estimate and the phase in about 5 minutes.</p></div><div class="fx reveal"><span class="fx-k">Reports</span><p class="fx-t"><span>Today</span>Asked for a number, managers piece it together from several apps.</p><p class="fx-f"><span>Fixed</span>Every KPI comes from real records and shows where it came from.</p></div></div>
+  </div>
+</section>
+
+<section id="numbers">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The numbers</div>
+      <h2>Three kinds of contractors. Only one is pulling ahead.</h2>
+      <p class="lede">What U.S. industry research says about contractors who still run on paper and phone calls, contractors juggling many disconnected apps, and contractors who run on one connected system. We found no Utah-specific benchmark, so these are national figures.</p>
+    </div>
+
+    <div class="cases">
+      <div class="case c-man reveal">
+        <span class="case-tag">Case 1</span>
+        <h3>Manual</h3>
+        <p class="case-sub">Spreadsheets, paper, phone calls and memory</p>
+        <div class="mbar"><span>Typical HVAC net margin</span><div class="mtrack"><i style="--a:5%;--b:12%"></i></div><b>5–12%</b></div>
+        <ul>
+          <li>Industry-average HVAC net margin is <b>5–12%</b>, and many shops run below 10%.</li>
+          <li>Among contractors with low digital adoption, only <b>6%</b> reported higher profits.</li>
+        </ul>
+      </div>
+      <div class="case c-apps reveal">
+        <span class="case-tag">Case 2</span>
+        <h3>Too many apps</h3>
+        <p class="case-sub">Ten tools that don't talk to each other</p>
+        <div class="big-stat"><b class="num">$58k</b><span>a year on about 10 different tools</span></div>
+        <ul>
+          <li><b>72%</b> of construction leaders spend too much time managing data because their tools don't connect.</li>
+          <li><b>59%</b> spend 11+ hours a week chasing information across tools and colleagues.</li>
+        </ul>
+      </div>
+      <div class="case c-con reveal">
+        <span class="case-tag">Case 3 · where you're headed</span>
+        <h3>One connected system</h3>
+        <p class="case-sub">One place for the office, the field and the owner</p>
+        <div class="mbar"><span>Top-quartile HVAC net margin</span><div class="mtrack"><i style="--a:15%;--b:25%"></i></div><b>15–25%</b></div>
+        <ul>
+          <li>Contractors with high digital engagement were <b>7x</b> as likely to report higher profits: <b>42%</b> vs. <b>6%</b>.</li>
+          <li><b>53%</b> saw big improvements in estimating and bidding, vs. 13% of low adopters.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="sub reveal">Other industries already made this jump</h3>
+    <div class="ind shell reveal">
+      <div class="ind-chart">
+        <p class="ind-t">Productivity growth per year, last two decades</p>
+        <div class="ib"><span>Construction</span><div class="ib-t"><i style="--v:27.8%" class="lo"></i></div><b>1.0%</b></div>
+        <div class="ib"><span>Whole economy</span><div class="ib-t"><i style="--v:77.8%"></i></div><b>2.8%</b></div>
+        <div class="ib"><span>Manufacturing</span><div class="ib-t"><i style="--v:100%" class="hi"></i></div><b>3.6%</b></div>
+      </div>
+      <div class="ind-facts">
+        <div><b class="num" data-count="760" data-suffix="%">760%</b><span>Manufacturing productivity growth in the U.S., 1947–2010</span></div>
+        <div><b class="num" data-count="6" data-suffix="%">6%</b><span>Construction over the same years</span></div>
+        <div><b>2nd to last</b><span>Construction's rank among U.S. sectors for digitization, ahead of only agriculture</span></div>
+      </div>
+    </div>
+    <p class="note reveal">Retail and manufacturing pulled ahead by connecting their data. The contractors who do the same now get the same advantage while most of their competitors are still on paper or juggling apps.</p>
+
+    <h3 class="sub reveal">What a few points of margin are worth</h3>
+    <div class="mcalc shell reveal">
+      <div class="mc-in">
+        <div class="mc-r"><label for="mc-rev">Yearly revenue <output id="mc-revo"></output></label><input type="range" id="mc-rev" min="1" max="30" step="0.5" value="5"></div>
+        <div class="mc-r"><label for="mc-pts">Margin improvement <output id="mc-ptso"></output></label><input type="range" id="mc-pts" min="0.5" max="8" step="0.5" value="2"></div>
+      </div>
+      <div class="mc-out"><span>Extra profit per year</span><b class="num" id="mc-res"></b><small id="mc-sub"></small></div>
+    </div>
+    <p class="note reveal">An illustration, not a promise: move the sliders to your own numbers. Every point of net margin is worth $10,000 for each $1 million in revenue.</p>
+
+    <div class="srcs reveal">
+      <b>Sources</b>
+      <a href="https://simprogroup.com/blog/hvac-industry-statistics-2026" target="_blank" rel="noopener">Simpro · HVAC Industry Statistics 2026</a>
+      <a href="https://www.servicetitan.com/blog/hvac-profit-margins" target="_blank" rel="noopener">ServiceTitan · HVAC Profit Margins</a>
+      <a href="https://constructiondive.com/news/gcs-reap-benefits-subcontractor-automation-report/653527" target="_blank" rel="noopener">Construction Dive · Dodge Construction Network study (2023, mid-size U.S. general contractors)</a>
+      <a href="https://www.forconstructionpros.com/business/business-services/financing-insurance-leasing/article/22969356/intuit-quickbooks-closing-constructions-visibility-gap-with-ai-connected-workflows" target="_blank" rel="noopener">For Construction Pros · Intuit "The Connected Build" survey (2025)</a>
+      <a href="https://www.constructionbusinessowner.com/technology/labor-shortages-digital-transformation-hacks-avoiding-project-delays" target="_blank" rel="noopener">Construction Business Owner · Quickbase 2025 Gray Work Index</a>
+      <a href="https://www.mckinsey.com/mgi/media-center/the-construction-industry-has-a-productivity-problem" target="_blank" rel="noopener">McKinsey Global Institute · The construction industry has a productivity problem</a>
+    </div>
+  </div>
+</section>
+
+<section id="chain">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Why the schedule can't stand alone</div>
+      <h2>The schedule is the sixth link in a chain.</h2>
+      <p class="lede">A schedule is only as good as the data behind it. Every project starts with a client and an approved estimate. If those live in another app, the schedule gets rebuilt by hand and drifts from reality.</p>
+    </div>
+    <div class="chain reveal" role="list">
+      <div class="node" role="listitem"><div class="dot">1</div><b>Client</b><span>Builder, owner or property manager</span></div>
+      <div class="node" role="listitem"><div class="dot">2</div><b>Estimate</b><span>Scope, line items, materials</span></div>
+      <div class="node" role="listitem"><div class="dot">3</div><b>Approval</b><span>Signed. The job is real</span></div>
+      <div class="node" role="listitem"><div class="dot">4</div><b>Project</b><span>Created from the approved estimate</span></div>
+      <div class="node" role="listitem"><div class="dot">5</div><b>Phases</b><span>From a template, editable per job</span></div>
+      <div class="node ask" role="listitem"><div class="dot">6</div><b>Schedule</b><span>What you asked for</span></div>
+      <div class="node" role="listitem"><div class="dot">7</div><b>Crews</b><span>Who is where, phase sign-off</span></div>
+      <div class="node" role="listitem"><div class="dot">8</div><b>Invoice</b><span>Progress billing per phase</span></div>
+    </div>
+    <div class="callout reveal">
+      <span class="k">Our approach</span>
+      <p>Phase 1 delivers the schedule, but we build links 1–5 underneath it at the same time, kept lean. Your team gets a schedule that knows who the client is, what was sold and what each phase needs.</p>
+    </div>
+  </div>
+</section>
+
+<section id="demos">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Live demos</div>
+      <h2>Three of your problems, solved on screen.</h2>
+      <p class="lede">These run on example data so you can see how each one would work. Pick a tab.</p>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Demos">
+      <button role="tab" id="tab-po" aria-selected="true" aria-controls="pane-po">Purchase order in 5 minutes</button>
+      <button role="tab" id="tab-bid" aria-selected="false" aria-controls="pane-bid">Answer a competing bid</button>
+      <button role="tab" id="tab-kpi" aria-selected="false" aria-controls="pane-kpi">Reports Aron can trust</button>
+    </div>
+
+    <div class="pane shell" id="pane-po" role="tabpanel" aria-labelledby="tab-po">
+      <div class="po">
+        <ol class="po-steps" id="po-steps">
+          <li>Pick the phase</li><li>Materials come from the estimate</li><li>Choose the supplier</li><li>Send the PO</li><li>Crew gets the pickup</li>
+        </ol>
+        <div class="po-screen" id="po-screen" aria-live="polite"></div>
+      </div>
+      <div class="po-foot">
+        <div class="po-clock"><span>Time spent</span><b class="num" id="po-time">0:00</b></div>
+        <div class="po-bars">
+          <div><span>Today</span><div class="pb"><i class="today-bar"></i></div><b>~60 min</b></div>
+          <div><span>With your system</span><div class="pb"><i class="new-bar" id="po-bar"></i></div><b id="po-bar-l">0 min</b></div>
+        </div>
+        <button id="po-play" class="act">Play again</button>
+      </div>
+      <p class="note">Example job and supplier. The PO number, items and prices are made up for the demo.</p>
+    </div>
+
+    <div class="pane shell" id="pane-bid" role="tabpanel" aria-labelledby="tab-bid" hidden>
+      <div class="bid-top">
+        <div><h3>Snowmelt driveway · their proposal vs. yours</h3><p class="note" style="margin:4px 0 0">The client sent a competitor's bid. The system lines it up against your estimate in seconds.</p></div>
+        <div class="bid-slide"><label for="bid-m">Your margin <output id="bid-mo"></output></label><input type="range" id="bid-m" min="10" max="40" value="32"></div>
+      </div>
+      <div class="scroll"><table class="bid">
+        <thead><tr><th>Line</th><th class="r">Competitor</th><th class="r">Yours</th><th class="r">Difference</th><th>What the system flags</th></tr></thead>
+        <tbody id="bid-body"></tbody>
+        <tfoot><tr><th>Total</th><th class="r num" id="bid-ct"></th><th class="r num" id="bid-ot"></th><th class="r num" id="bid-dt"></th><th id="bid-verdict"></th></tr></tfoot>
+      </table></div>
+      <div class="gaps" id="bid-gaps"></div>
+      <p class="note">Example numbers. With your data, every line, price and supplier comes from your own estimates and purchase orders.</p>
+    </div>
+
+    <div class="pane shell" id="pane-kpi" role="tabpanel" aria-labelledby="tab-kpi" hidden>
+      <div class="kpis" id="kpis">
+        <button class="kpi" data-src="12 projects with at least one phase scheduled between today and the next 30 days."><span>Active projects</span><b class="num" data-to="12">12</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,22 15,20 30,18 45,19 60,14 75,12 100,8"/></svg></button>
+        <button class="kpi" data-src="10 of 12 active projects have every phase on or ahead of its planned date. 2 slipped because the builder moved a pour."><span>On schedule</span><b class="num" data-to="83" data-suf="%">83%</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,14 15,16 30,12 45,10 60,13 75,9 100,7"/></svg></button>
+        <button class="kpi" data-src="41 approved out of 100 estimates sent since January 1. Each estimate links to its client and its project."><span>Estimate win rate</span><b class="num" data-to="41" data-suf="%">41%</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,20 15,18 30,19 45,15 60,14 75,12 100,11"/></svg></button>
+        <button class="kpi" data-src="Average of the days between &quot;estimate sent&quot; and &quot;approved&quot; for the last 30 approvals."><span>Days to approval</span><b class="num" data-to="9">9</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,8 15,10 30,9 45,12 60,14 75,16 100,18"/></svg></button>
+        <button class="kpi" data-src="Sum of invoices created from completed phases this month, synced with QuickBooks."><span>Billed this month</span><b class="num" data-to="184" data-pre="$" data-suf="k">$184k</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,24 15,21 30,19 45,16 60,15 75,10 100,6"/></svg></button>
+        <button class="kpi" data-src="27 purchase orders this week. Average time from opening the phase to sending the PO: 6 minutes."><span>POs this week</span><b class="num" data-to="27">27</b><svg viewBox="0 0 100 28" aria-hidden="true"><polyline points="0,18 15,15 30,17 45,12 60,13 75,9 100,10"/></svg></button>
+      </div>
+      <div class="kpi-src" id="kpi-src" aria-live="polite"><b>Click any number</b> to see exactly where it comes from. Every report traces back to real records, so the number you present is the number that happened.</div>
+      <p class="note">Example numbers for illustration.</p>
+    </div>
+  </div>
+</section>
+
+<section id="anywhere">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">From anywhere</div>
+      <h2>Your whole business, live, in your pocket.</h2>
+      <p class="lede">From the office, a job site or another state, Aron opens his phone and sees exactly what is happening right now. And he doesn't have to dig for answers: he asks in plain English and gets the answer, with the numbers behind it.</p>
+    </div>
+    <div class="any">
+      <div class="phone reveal" aria-label="Phone preview, example data">
+        <div class="ph-notch"></div>
+        <div class="ph-screen">
+          <div class="ph-top"><span>9:41</span><span>Thermal · Mission Control</span></div>
+          <div class="ph-brief" id="ph-brief"><b>Good morning, Aron</b><span>12 active projects · 2 behind · 4 estimates to follow up · $18,600 ready to invoice</span></div>
+          <div class="ph-chat" id="ph-chat" aria-live="polite"></div>
+          <div class="ph-input"><span id="ph-typing">Ask your business…</span><i>➤</i></div>
+        </div>
+      </div>
+      <div class="any-side">
+        <p class="any-k reveal">Tap a question to ask it:</p>
+        <div class="ask-chips reveal"><button class="ask-chip" data-i="0">Which projects are behind this week?</button><button class="ask-chip" data-i="1">Which estimates need a follow-up?</button><button class="ask-chip" data-i="2">How much did we bill in October?</button><button class="ask-chip" data-i="3">How busy are the crews next week?</button><button class="ask-chip" data-i="4">Which snowmelt clients need a tune-up?</button></div>
+        <ul class="any-list">
+          <li class="reveal"><b>Live, not last week's spreadsheet.</b> Every update in the field shows up right away.</li>
+          <li class="reveal"><b>Morning brief at 7 AM.</b> What's at risk today, before the first call.</li>
+          <li class="reveal"><b>Alerts the moment something slips,</b> on your phone or by email.</li>
+          <li class="reveal"><b>Reports on request.</b> Ask for one and share it with a manager in one tap.</li>
+          <li class="reveal"><b>Phone, tablet or laptop.</b> Nothing to install for the office.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="why-now">
+      <div class="wn reveal"><b class="num" data-count="1" data-suffix=" system">1 system</b><span>Your team learns one place instead of twelve apps, and every tool you retire is one less subscription.</span></div>
+      <div class="wn reveal"><b>Day one</b><span>Your history starts the day you start. The sooner you begin, the sooner your reports show real trends for the next season.</span></div>
+      <div class="wn reveal"><b>Ahead</b><span>Contractors who run on live data quote faster, follow up every lead and catch problems first. That's the edge.</span></div>
+    </div>
+    <p class="note reveal">Example data. Questions in plain English and the morning brief are part of the reports phase on the roadmap.</p>
+  </div>
+</section>
+
+<section id="portfolio">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">All projects at a glance</div>
+      <h2>One line per project. Every phase, side by side.</h2>
+      <p class="lede">Each row is a live job with its phases laid on the same calendar. You see which phase each job is in today, which ones are waiting on the builder and which ones slipped. Click a project to open its full schedule below.</p>
+    </div>
+    <div class="shell reveal">
+      <div class="pf-sum" id="pf-sum" aria-live="polite"></div>
+      <div class="scroll">
+        <div class="pf" id="pf"></div>
+      </div>
+      <div class="legend">
+        <span><i class="k-team"></i>Your crews</span>
+        <span><i class="k-office"></i>Office / design</span>
+        <span><i class="k-gc"></i>General contractor</span>
+        <span><i style="box-shadow:0 0 0 2px var(--ink);background:var(--ember)"></i>Phase in progress today</span>
+        <span><i style="background:var(--ember);opacity:.4"></i>Phase done</span>
+      </div>
+      <p class="note">Example projects for illustration. In the real system this view fills itself from approved estimates.</p>
+    </div>
+  </div>
+</section>
+
+<section id="phases">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">One project, in detail</div>
+      <h2>Move one phase and everything after it moves too.</h2>
+      <p class="lede">Each project type starts from a phase template. Phases know what they depend on. When the general contractor slips or you add a re-inspection, the dates downstream recalculate, and the line for that project above updates with them. Try it.</p>
+    </div>
+    <div class="shell reveal">
+      <div class="g-top">
+        <div class="g-title" id="g-title"></div>
+        <div class="seg">
+          <button id="b-slip" class="act">GC slips 5 days</button>
+          <button id="b-add" class="act">Add a re-inspection</button>
+          <button id="b-reset">Reset this project</button>
+        </div>
+      </div>
+      <div class="g-status" aria-live="polite">
+        <span>Client: <b id="s-client"></b></span>
+        <span>Phases: <b id="s-count"></b></span>
+        <span>Finish: <b id="s-end"></b></span>
+      </div>
+      <div class="scroll">
+        <div class="gantt" id="gantt"></div>
+        <div class="g-axis gantt" aria-hidden="true"><div></div><div><span>Wk 1</span><span>Wk 2</span><span>Wk 3</span><span>Wk 4</span><span>Wk 5</span><span>Wk 6</span><span>Wk 7</span><span>Wk 8</span></div></div>
+      </div>
+      <div class="legend">
+        <span><i class="k-team"></i>Your crews</span>
+        <span><i class="k-office"></i>Office / design</span>
+        <span><i class="k-gc"></i>General contractor (outside your control)</span>
+        <span><i style="background:transparent;box-shadow:0 0 0 2px var(--warn)"></i>Moved by a change</span>
+        <span><i style="border-left:2px solid var(--ice);border-radius:0;width:2px"></i>Today</span>
+      </div>
+      <div class="toast" id="toast" aria-live="polite"></div>
+      <p class="note">Example phases and durations, in working days, counted from the project's start. We'll build the real templates with your team from two or three recent jobs.</p>
+    </div>
+  </div>
+</section>
+
+<section id="model">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">What sits underneath</div>
+      <h2>One record per job, from first call to final invoice.</h2>
+      <p class="lede">Nothing gets typed twice. Each step creates the next one.</p>
+    </div>
+    <div class="model">
+      <div class="mbox reveal"><h3>Client</h3><p>Builders, homeowners, property managers. Contacts, sites and job history in one place.</p></div>
+      <div class="mbox reveal"><h3>Estimate</h3><ul><li>Scope by system: radiant, snowmelt, HVAC, plumbing</li><li>Line items and labor</li><li>Materials grouped by phase</li></ul></div>
+      <div class="mbox reveal"><h3>Approval</h3><p>Client approves. The project is created automatically with the right phase template.</p></div>
+      <div class="mbox reveal"><h3>Project &amp; phases</h3><p>Phases with durations, dependencies, crew and materials. Insert, remove or reorder per job.</p></div>
+      <div class="mbox reveal"><h3>Schedule</h3><p>All projects on one calendar, plus the full schedule of each one. Crew double-booking shows up before it happens.</p></div>
+      <div class="mbox reveal"><h3>Billing</h3><p>A completed phase can trigger a progress invoice in your accounting system.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="accounting">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">The QuickBooks question</div>
+      <h2>You don't have to decide on accounting before you get your schedule.</h2>
+      <p class="lede">We design the platform so accounting is a connection, not a dependency. Here are three paths. We recommend starting with the first one.</p>
+    </div>
+    <div class="opts">
+      <div class="opt rec reveal"><span class="pill">Recommended for Phase 1</span><h3>A · Keep QuickBooks as the books</h3><div class="sync" aria-hidden="true"><span>Platform</span><div class="pipe"><i></i><i></i><i class="back"></i></div><span>QuickBooks</span></div><p>The platform handles clients, estimates, projects and schedules, and syncs customers, approved estimates and invoices with QuickBooks.</p><ul><li>Your bookkeeper's workflow doesn't change</li><li>Lowest risk, fastest start</li></ul></div>
+      <div class="opt reveal"><span class="pill">Phase 2–3</span><h3>B · Platform leads, QuickBooks records</h3><p>Estimates, approvals and progress billing all live in the platform. QuickBooks receives only the final accounting entries.</p><ul><li>One place to work for the office</li><li>QuickBooks stays for taxes and reports</li></ul></div>
+      <div class="opt reveal"><span class="pill">Later, if wanted</span><h3>C · Move to a modern accounting tool</h3><p>Because accounting sits behind one connection, switching later means replacing that connection. Projects and schedules aren't touched.</p><ul><li>No lock-in</li><li>We'll compare options with your accountant</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section id="yours">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Your own system</div>
+      <h2>"What happens if something happens to you?" A fair question. Here is the answer.</h2>
+      <p class="lede">Your system never depends on one person. The code, the data and the instructions to run it are with you from the first week, so another developer could pick it up at any time.</p>
+    </div>
+    <div class="safe">
+      <div class="sf reveal"><span class="sf-n">1</span><h3>The code is yours</h3><p>Kept in a repository under your company's account, with shared rights: use it, change it, hand it to anyone.</p></div>
+      <div class="sf reveal"><span class="sf-n">2</span><h3>Mainstream technology</h3><p>Built with .NET, React and PostgreSQL, tools thousands of developers already know. Nothing exotic or locked.</p></div>
+      <div class="sf reveal"><span class="sf-n">3</span><h3>Your data, in your office</h3><p>A full copy every hour on a backup server in your own office, plus your cloud copy. You never have to ask anyone for it.</p></div>
+      <div class="sf reveal"><span class="sf-n">4</span><h3>Written down every week</h3><p>Documentation updated as we build: how it works, how to deploy it, how to restore it.</p></div>
+      <div class="sf reveal"><span class="sf-n">5</span><h3>Emergency access kit</h3><p>Admin accounts and passwords in a secure vault you control, so you can always get in.</p></div>
+      <div class="sf reveal"><span class="sf-n">6</span><h3>Exit kit</h3><p>Step-by-step instructions for any developer to run your system on another server.</p></div>
+    </div>
+
+    <h3 class="sub reveal">Packaged software or your own system</h3>
+    <div class="scroll reveal"><table class="cmp">
+      <thead><tr><th></th><th>Packaged software</th><th class="mine">Your own system</th></tr></thead>
+      <tbody>
+        <tr><th>Getting your data in</th><td>About $60,000–70,000 to move your data (the quote you received)</td><td class="mine">Part of the weekly work, no separate migration fee</td></tr>
+        <tr><th>Every year</th><td>A license fee that keeps coming</td><td class="mine">A monthly hosting plan; development hours only while you want them</td></tr>
+        <tr><th>Fit</th><td>Your team adapts to the software</td><td class="mine">Built around your phases, POs, bids and reports</td></tr>
+        <tr><th>Changes</th><td>Wait for the vendor's roadmap</td><td class="mine">You choose the priorities every week</td></tr>
+        <tr><th>Who owns it</th><td>The vendor. Leave, and you start over</td><td class="mine">You hold the code and the data</td></tr>
+        <tr><th>Support</th><td>A ticket queue outside your company, often 6–12 hours, longer on weekends</td><td class="mine">Daniel, who built it, in under 2 hours, any day</td></tr>
+        <tr><th>If the provider disappears</th><td>Depends on the vendor</td><td class="mine">Code, data and instructions are already with you</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="support">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Support</div>
+      <h2>When something breaks, you call a person who knows your system.</h2>
+      <p class="lede">With packaged software you depend on a vendor outside your company: you open a ticket, wait in a queue and explain your business to someone who has never seen it. With your own system you call Daniel, who built it, and he fixes it.</p>
+    </div>
+    <div class="sup-race reveal">
+      <div class="sr"><span class="sr-l">SoloDevPro</span><div class="sr-b"><i class="sr-us"></i></div><b class="sr-v ok">Under 2 h</b></div>
+      <div class="sr"><span class="sr-l">Typical vendor ticket</span><div class="sr-b"><i class="sr-them"></i></div><b class="sr-v">6–12 h</b></div>
+      <div class="sr"><span class="sr-l">Vendor ticket on a weekend</span><div class="sr-b"><i class="sr-wk"></i></div><b class="sr-v">Monday</b></div>
+    </div>
+    <div class="sup-cards">
+      <div class="opt rec reveal"><span class="pill">Our commitment</span><h3>Response in under 2 hours</h3><p>Any day of the week. Call or text Daniel directly, not a help desk.</p></div>
+      <div class="opt reveal"><span class="pill">No translation</span><h3>The person who built it</h3><p>No need to explain your phases, builders or counties. Daniel already knows them.</p></div>
+      <div class="opt reveal"><span class="pill">No surprises</span><h3>Most issues caught first</h3><p>The monitor alerts us when something goes wrong, often before your team notices.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="hosting">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Hosting &amp; backups</div>
+      <h2>We run it, we protect it, and a full copy lives in your office.</h2>
+      <p class="lede">SoloDevPro hosts your system, keeps it updated and watches it every day. Your data is copied every day to three places, and one of them is yours. If we ever stop working together, your data is already with you.</p>
+    </div>
+
+    <div class="pipe-line reveal" aria-hidden="true">
+      <div class="pl-track"><i class="pl-dot"></i></div>
+      <div class="pl-steps">
+        <div class="pl"><b>Change</b><span>New feature or fix</span></div>
+        <div class="pl"><b>Automatic tests</b><span>Every change, every time</span></div>
+        <div class="pl"><b>Review</b><span>Automated review of the code</span></div>
+        <div class="pl"><b>Test copy</b><span>Tried on a replica first</span></div>
+        <div class="pl live"><b>Live</b><span>Your team uses it</span></div>
+        <div class="pl bk"><b>Backed up</b><span>Every day, three places</span></div>
+      </div>
+    </div>
+
+    <div class="copies reveal">
+      <div class="cp-src"><span class="cp-ic">●</span><b>Live system</b><span>Data center</span></div>
+      <div class="cp-flow" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="cp-dst">
+        <div class="cp ours"><b>Our backup vault</b><span>Encrypted · plus an off-site copy</span></div>
+        <div class="cp yours"><b>Your office server</b><span>Every hour, in your own office</span></div>
+      </div>
+    </div>
+
+
+    <h3 class="sub reveal">A backup server in your own office</h3>
+    <div class="office shell reveal" id="office" data-state="normal">
+      <div class="of-ctrl" role="group" aria-label="Scenario">
+        <button data-s="normal" aria-pressed="true">Normal day</button>
+        <button data-s="net" aria-pressed="false">Office internet goes down</button>
+        <button data-s="cloud" aria-pressed="false">The cloud goes down</button>
+      </div>
+      <div class="of-map" aria-hidden="true">
+        <div class="of-node of-cloud"><span class="st"></span><b>Live system</b><small>Data center</small></div>
+        <div class="of-link"><i></i><i></i><span class="of-x">✕</span></div>
+        <div class="of-node of-box"><span class="st"></span><b>Office backup server</b><small>Your office · on battery backup</small></div>
+        <div class="of-team"><b>Your team</b><small id="of-uses">uses the live system</small></div>
+      </div>
+      <p class="of-msg" id="of-msg" aria-live="polite"></p>
+      <div class="hw">
+        <div><h3>What it is</h3><ul><li>A small, quiet computer, about the size of a hardcover book</li><li>8+ cores, 32–64 GB of memory, 1–2 TB of fast storage</li><li>A small battery backup (UPS) so it rides through power cuts</li></ul></div>
+        <div><h3>What we do with it</h3><ul><li>Install it and connect it to our private, encrypted network</li><li>Copy your data to it every hour, encrypted</li><li>Keep a working copy of your system ready to open on your office network</li><li>Monitor and update it remotely</li></ul></div>
+      </div>
+      <p class="note">Hardware is bought for you at cost, and you approve the quote before we buy anything. It's yours to keep.</p>
+    </div>
+
+    <h3 class="sub reveal">What runs your system</h3>
+    <div class="roles"><div class="role reveal"><span class="rn">01</span><h3>Live system</h3><p>Your app and database, where your team works every day.</p><span class="where">Data center</span></div><div class="role reveal"><span class="rn">02</span><h3>Test copy</h3><p>A replica of your live system. Every change is tried here first.</p><span class="where">Our infrastructure</span></div><div class="role reveal"><span class="rn">03</span><h3>Build &amp; checks</h3><p>Compiles every change and runs automatic tests and review.</p><span class="where">Our infrastructure</span></div><div class="role reveal"><span class="rn">04</span><h3>Backup vault</h3><p>Daily encrypted copies, plus a second copy off site.</p><span class="where">Our infrastructure + cloud</span></div><div class="role reveal"><span class="rn">05</span><h3>Office backup server</h3><p>A full, encrypted copy every hour, plus a working copy of the system.</p><span class="where">Your office</span></div><div class="role reveal"><span class="rn">06</span><h3>Monitor</h3><p>Watches everything around the clock and alerts us.</p><span class="where">Separate from the live system</span></div></div>
+
+    <h3 class="sub reveal">Where your copies live</h3>
+    <div class="opts">
+      <div class="opt rec reveal"><span class="pill">Recommended</span><h3>The office backup server</h3><p>Your data and a working copy of the system, physically with you.</p></div>
+      <div class="opt reveal"><span class="pill">Add-on</span><h3>Cloud storage in your name</h3><p>A storage account that belongs to your company. No hardware to look after.</p></div>
+      <div class="opt reveal"><span class="pill">Alternative</span><h3>Your existing server</h3><p>A dedicated folder or disk on a server you already have.</p></div>
+    </div>
+    <p class="note reveal">Whichever you pick, the account or the device is yours, not ours.</p>
+
+    <div class="bk-grid">
+      <div class="reveal">
+        <h3 class="sub" style="margin-top:0">What we back up</h3>
+        <div class="scroll"><table class="bk-table">
+          <thead><tr><th>What</th><th>How often</th><th>Kept for</th></tr></thead>
+          <tbody>
+            <tr><td>Full database</td><td>Every day</td><td>30 daily · 12 monthly</td></tr>
+            <tr><td>Database changes</td><td>Every hour</td><td>7 days</td></tr>
+            <tr><td>Uploaded files (photos, PDFs)</td><td>Every day</td><td>Same as the database</td></tr>
+            <tr><td>System settings (no passwords)</td><td>On every change</td><td>Full history</td></tr>
+            <tr><td>Your code</td><td>Always current, in a repository you can access</td><td>Full history</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="promises reveal">
+        <h3 class="sub" style="margin-top:0">What we commit to</h3>
+        <div class="pr"><b class="num" data-count="1" data-suffix=" h">1 h</b><span>Most data you could lose (target)</span></div>
+        <div class="pr"><b class="num" data-count="4" data-suffix=" h">4 h</b><span>To be back online (target)</span></div>
+        <div class="pr"><b>Monthly</b><span>We restore a backup to prove it works</span></div>
+        <div class="pr"><b>Your key</b><span>Your copy is encrypted, and you hold the key</span></div>
+        <div class="pr"><b>Exit kit</b><span>Written steps to run your system on another server</span></div>
+      </div>
+    </div>
+
+    <h3 class="sub reveal">Who does what</h3>
+    <div class="scroll reveal"><table class="bk-table who">
+      <thead><tr><th>Task</th><th>SoloDevPro</th><th>Thermal Engineering</th></tr></thead>
+      <tbody>
+        <tr><td>Hosting, security updates and monitoring</td><td><i class="ck"></i></td><td></td></tr>
+        <tr><td>Daily backups and the monthly restore test</td><td><i class="ck"></i></td><td></td></tr>
+        <tr><td>Answering alerts if something goes down</td><td><i class="ck"></i></td><td></td></tr>
+        <tr><td>A spot in the office with power and internet for the backup server</td><td></td><td><i class="ck"></i></td></tr>
+        <tr><td>Keeping your encryption key somewhere safe</td><td></td><td><i class="ck"></i></td></tr>
+        <tr><td>Weekly priorities and feedback on the demo</td><td></td><td><i class="ck"></i></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Roadmap</div>
+      <h2>Start with the schedule. Add tools as you need them.</h2>
+      <p class="lede">This is the order we suggest. It's a living plan: we revisit it with you every week and move things up or down as your priorities change.</p>
+    </div>
+    <div class="road" id="road">
+      <div class="road-line" aria-hidden="true"><i id="road-fill"></i></div>
+      <div class="step reveal"><div class="ph">Phase 0<small>Weeks 1–2</small></div><div><h3>Discovery</h3><ul><li>Map the 10–12 tools in use today and what each one holds</li><li>Model phase templates from real jobs: snowmelt, radiant, HVAC</li><li>Decide where estimates live: QuickBooks or the platform</li><li>List the active projects to load on day one</li></ul><p class="out"><b>You get:</b> a written blueprint and one shared, prioritized list of work.</p></div></div>
+      <div class="step reveal"><div class="ph">Phase 1</div><div><h3>Projects &amp; dynamic schedules</h3><ul><li>Clients and builders: every project of a builder in one place, with its contacts</li><li>Estimates and approvals, connected to QuickBooks</li><li>Purchase orders in minutes: materials straight from the estimate and the phase</li><li>Projects from phase templates, including the design phase</li><li>Permits and inspections tracked per phase and per county</li><li>All-projects view plus the full schedule of each project</li><li>Crew calendar that also shows crews pulled to service and emergency calls</li><li>Your active projects loaded, so the system is useful from the first week</li><li>Roles for owners, office, project managers and installers, plus a mobile view for the field</li><li>The office backup server installed and receiving copies</li></ul><p class="out"><b>You get:</b> your weekly schedule meeting runs from the system, with every active project in it.</p></div></div>
+      <div class="step reveal"><div class="ph">Phase 2</div><div><h3>Bids, reports &amp; billing</h3><ul><li>Competing-bid comparison against your own estimates</li><li>KPI dashboards for Aron and each manager, every number traceable</li><li>Ask your business in plain English, plus a morning brief on your phone</li><li>Phase sign-off with photos, progress invoicing per phase</li></ul><p class="out"><b>You get:</b> faster answers to clients and reports you can present with confidence.</p></div></div>
+      <div class="step reveal"><div class="ph">Phase 3+</div><div><h3>More tools on the same base</h3><ul><li>Field time insights: see where each crew day goes, so you can compare options like hourly or on-site pay with real data</li><li>Service and dispatch for 24/7 calls, and maintenance agreements</li><li>Replace the remaining apps one by one, in the order you choose</li><li>Dashboards across projects and alerts when a phase is about to slip</li></ul><p class="out"><b>You get:</b> one place to run the business, grown at your pace.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<section id="investment">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">How we work together</div>
+      <h2>A dedicated developer on your team, every week.</h2>
+      <p class="lede">Your list of problems is long, and priorities will change as we learn. Instead of one big fixed project, we work as part of your team on a weekly retainer. You choose what matters most each week, and you see working results every week.</p>
+    </div>
+    <div class="cycle-wrap">
+      <div class="cycle reveal" aria-hidden="true">
+        <svg viewBox="0 0 300 300">
+          <defs><linearGradient id="arc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a3d"/><stop offset="1" stop-color="#6fd0f5"/></linearGradient></defs>
+          <circle cx="150" cy="150" r="108" fill="none" stroke="#22324a" stroke-width="2"/>
+          <g class="spin"><circle cx="150" cy="150" r="108" fill="none" stroke="url(#arc)" stroke-width="4" stroke-linecap="round" stroke-dasharray="120 560"/></g>
+          <g class="cn c1"><circle cx="150" cy="42" r="9"/><text x="150" y="20" text-anchor="middle">Set priorities</text></g>
+          <g class="cn c2"><circle cx="258" cy="150" r="9"/><text x="258" y="182" text-anchor="middle">Build</text></g>
+          <g class="cn c3"><circle cx="150" cy="258" r="9"/><text x="150" y="290" text-anchor="middle">Demo</text></g>
+          <g class="cn c4"><circle cx="42" cy="150" r="9"/><text x="42" y="182" text-anchor="middle">Review</text></g>
+          <text x="150" y="146" text-anchor="middle" class="ct1">Every</text>
+          <text x="150" y="172" text-anchor="middle" class="ct1">week</text>
+        </svg>
+      </div>
+      <ul class="terms">
+        <li class="reveal"><b>Part time to start: 20–25 h a week</b><span>Dedicated to Thermal Engineering, with room for your team to review and give feedback.</span></li>
+        <li class="reveal"><b>Weeks 1–2 are discovery</b><span>Part of the retainer, not a separate fee.</span></li>
+        <li class="reveal"><b>Weekly demo, weekly invoice</b><span>You see working software every week and pay for that week's hours.</span></li>
+        <li class="reveal"><b>You set the priorities</b><span>Chosen every week from one shared list that you can always see.</span></li>
+        <li class="reveal"><b>3-month start, then month to month</b><span>Enough time to see real results and decide how to continue.</span></li>
+        <li class="reveal"><b>Platform plan billed monthly</b><span>Hosting, hourly backups to your office server, monitoring and security updates, separate from the hours.</span></li>
+        <li class="reveal"><b>Research and build at the same time</b><span>We learn your operation while we build, so each week starts from what we found the week before.</span></li>
+        <li class="reveal"><b>Grow to full time when you're ready</b><span>Once priorities are clear and the system is in daily use, we add hours.</span></li>
+      </ul>
+    </div>
+    <div class="nodate reveal">
+      <div><span class="pill info">Why no finish date</span>
+      <h3>We start from zero with your process, so we won't promise a date we can't keep.</h3>
+      <p>Some answers only show up once your team uses the first pieces. Instead of a deadline, you get working software every week. After discovery we estimate each next step with real data, not guesses.</p></div>
+      <div class="weeks" aria-hidden="true"><span><i></i>Wk 1</span><span><i></i>Wk 2</span><span><i></i>Wk 3</span><span><i></i>Wk 4</span><span><i></i>Wk 5</span><span><i></i>Wk 6</span><span><i></i>Wk 7</span><span><i></i>Wk 8</span><span><i></i>Wk 9</span><span><i></i>Wk 10</span><span><i></i>Wk 11</span><span><i></i>Wk 12</span></div>
+    </div>
+    <div class="opt own reveal"><span class="pill">Ownership</span><h3>Shared rights to the code</h3><p>You get full rights to the code we deliver: use it, change it, host it elsewhere or sell it. SoloDevPro keeps the same rights, so the platform keeps improving for every customer. Your data is yours alone.</p></div>
+  </div>
+</section>
+
+
+
+<section id="reply">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Your answer</div>
+      <h2>Ready when you are, Aron.</h2>
+      <p class="lede">Pick a start date and send. It opens an email to Daniel with your answer already written.</p>
+    </div>
+    <form class="reply shell reveal" id="reply-form">
+      <div class="rf-row">
+        <label for="rf-name">Your name</label>
+        <input id="rf-name" type="text" value="Aron" autocomplete="name">
+      </div>
+      <fieldset class="rf-row"><legend>When should we start?</legend>
+        <label class="ch"><input type="radio" name="start" value="Monday, November 16" checked> Monday, November 16</label>
+        <label class="ch"><input type="radio" name="start" value="Monday, November 23"> Monday, November 23</label>
+        <label class="ch"><input type="radio" name="start" value="I have questions first"> I have questions first</label>
+      </fieldset>
+      
+      <div class="rf-row">
+        <label for="rf-note">Anything you'd like to add</label>
+        <textarea id="rf-note" rows="3" placeholder="Questions, priorities, who else should join the first meeting"></textarea>
+      </div>
+      <button type="submit" class="send">Send my answer</button>
+      <p class="note" id="rf-out">Prefer to talk? Call or text Daniel at 801.376.2721, or write to hello@thedevpro.io.</p>
+    </form>
+  </div>
+</section>
+
+<section id="next">
+  <div class="wrap next">
+    <div class="reveal">
+      <div class="sec-head" style="margin-bottom:22px">
+        <div class="eyebrow">Next step</div>
+        <h2>A discovery session with your team.</h2>
+      </div>
+      <ul class="checklist">
+        <li>List of the apps and spreadsheets you use today</li>
+        <li>2–3 recent projects (one snowmelt, one radiant, one HVAC) to model phases</li>
+        <li>Read-only access to QuickBooks</li>
+        <li>The list of active projects and their builders</li>
+        <li>A spot in the office for the backup server</li>
+        <li>30 minutes with whoever builds the schedule today</li>
+      </ul>
+    </div>
+    <div class="sign reveal">
+      <div class="eyebrow">Who we are</div>
+      <p class="who">SoloDevPro</p>
+      <p class="lede">Over 20 years building business software. We've already built and run an operations platform for an HVAC contractor: projects, estimates, QuickBooks integration and a field app for technicians. We know the trade's workflow and we build systems your team can use from day one.</p>
+      <p class="lede"><b style="color:var(--ink)">Daniel Kalasic</b> · SoloDevPro<br>hello@thedevpro.io · dkalasic@gmail.com<br>801.376.2721</p>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">Prepared for Thermal Engineering by SoloDevPro · Daniel Kalasic · hello@thedevpro.io · 801.376.2721 · November 2026 · Example data is marked as such.</div></footer>
+
+<script>
+(function(){
+  /* ---------- reveal ---------- */
+  var els=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{threshold:.15});
+    els.forEach(function(el){io.observe(el);});
+  }
+
+  /* ---------- hero radiant loop ---------- */
+  var cv=document.getElementById('loop'),ctx=cv.getContext('2d'),pts=[],t=0;
+  var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function build(){
+    var r=cv.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+    cv.width=r.width*dpr;cv.height=r.height*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+    pts=[];var w=r.width,h=r.height,x0=w*.52,x1=w-30,rows=7,gap=(h-60)/(rows-1);
+    for(var i=0;i<rows;i++){
+      var y=30+i*gap,a=i%2?x1:x0,b=i%2?x0:x1;
+      for(var s=0;s<=40;s++){pts.push([a+(b-a)*s/40,y]);}
+      if(i<rows-1){var cx=b,cy=y+gap/2,dir=i%2?-1:1;for(var k=1;k<20;k++){var ang=-Math.PI/2+Math.PI*k/20;pts.push([cx+dir*Math.cos(ang)*gap/2,cy+Math.sin(ang)*gap/2]);}}
+    }
+  }
+  function draw(){
+    var r=cv.getBoundingClientRect();ctx.clearRect(0,0,r.width,r.height);
+    ctx.lineWidth=2;ctx.strokeStyle='rgba(111,208,245,.18)';ctx.beginPath();
+    pts.forEach(function(p,i){i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);});ctx.stroke();
+    var n=pts.length,head=Math.floor(t)%n,len=Math.floor(n*.35);
+    for(var j=0;j<len;j++){
+      var idx=(head-j+n)%n,p=pts[idx],q=pts[(idx+1)%n],f=j/len;
+      var rC=Math.round(255+(111-255)*f),gC=Math.round(122+(208-122)*f),bC=Math.round(61+(245-61)*f);
+      ctx.strokeStyle='rgba('+rC+','+gC+','+bC+','+(1-f)+')';ctx.lineWidth=3;
+      ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke();
+    }
+    t+=1.4;if(!reduce)requestAnimationFrame(draw);
+  }
+  build();draw();window.addEventListener('resize',build);
+
+  /* ---------- data ---------- */
+  var TEMPLATES={
+    snow:[
+      {id:'d',n:'Design & heat-load calc',k:'office',d:3,dep:[]},
+      {id:'m',n:'Material release',k:'office',d:2,dep:['d']},
+      {id:'r',n:'Tubing & manifold rough-in',k:'team',d:3,dep:['m']},
+      {id:'p',n:'Pressure test & inspection',k:'team',d:1,dep:['r'],insp:true},
+      {id:'g',n:'Concrete / pavers pour',k:'gc',d:3,dep:['p'],gc:true},
+      {id:'b',n:'Boiler & mechanical room',k:'team',d:4,dep:['p']},
+      {id:'s',n:'Startup & commissioning',k:'team',d:1,dep:['g','b']},
+      {id:'c',n:'Closeout & warranty',k:'office',d:1,dep:['s']}],
+    rad:[
+      {id:'d',n:'Design & load calc',k:'office',d:4,dep:[]},
+      {id:'m',n:'Material release',k:'office',d:2,dep:['d']},
+      {id:'f',n:'Framing complete',k:'gc',d:3,dep:['d'],gc:true},
+      {id:'r',n:'Radiant tubing rough-in',k:'team',d:5,dep:['m','f']},
+      {id:'p',n:'Pressure test & inspection',k:'team',d:1,dep:['r'],insp:true},
+      {id:'g',n:'Gypcrete / slab pour',k:'gc',d:2,dep:['p']},
+      {id:'b',n:'Mechanical room & boiler',k:'team',d:5,dep:['p']},
+      {id:'t',n:'Controls & thermostats',k:'team',d:2,dep:['g','b']},
+      {id:'s',n:'Startup & closeout',k:'team',d:2,dep:['t']}],
+    hvac:[
+      {id:'d',n:'Design & submittals',k:'office',d:4,dep:[]},
+      {id:'m',n:'Material release',k:'office',d:3,dep:['d']},
+      {id:'r',n:'Ductwork rough-in',k:'team',d:6,dep:['m']},
+      {id:'p',n:'Rough inspection',k:'team',d:1,dep:['r'],insp:true},
+      {id:'g',n:'Ceiling close-in',k:'gc',d:3,dep:['p'],gc:true},
+      {id:'e',n:'Equipment set & trim',k:'team',d:4,dep:['g']},
+      {id:'s',n:'Startup & air balance',k:'team',d:2,dep:['e']},
+      {id:'c',n:'Closeout',k:'office',d:1,dep:['s']}]
+  };
+  var TYPE={snow:'Snowmelt',rad:'Radiant + boiler',hvac:'HVAC'};
+  var PROJECTS=[
+    {id:1,name:'Driveway & walks snowmelt',client:'Custom residence · Park City',tpl:'snow',start:6},
+    {id:2,name:'Radiant floors & boiler',client:'New home · Bountiful',tpl:'rad',start:0},
+    {id:3,name:'Office tenant improvement',client:'Commercial · Salt Lake City',tpl:'hvac',start:3},
+    {id:4,name:'Condo entry snowmelt',client:'Multi-family · Summit County',tpl:'snow',start:21},
+    {id:5,name:'Radiant floors & boiler',client:'Custom home · Heber',tpl:'rad',start:30}
+  ];
+  var TODAY=17,PSCALE=60,DSCALE=40;
+  function clone(o){return JSON.parse(JSON.stringify(o));}
+  function compute(ph){
+    var end={},by={};ph.forEach(function(p){by[p.id]=p;});
+    function e(id){if(end[id]!=null)return end[id];var p=by[id],s=0;p.dep.forEach(function(d){s=Math.max(s,e(d));});p.start=s+(p.delay||0);end[id]=p.start+p.d;return end[id];}
+    ph.forEach(function(p){e(p.id);});
+    return Math.max.apply(null,ph.map(function(p){return end[p.id];}));
+  }
+  function init(p){
+    p.phases=clone(TEMPLATES[p.tpl]);p.end=compute(p.phases);p.baseEnd=p.end;
+    p.base={};p.phases.forEach(function(x){p.base[x.id]=x.start;});p.added=false;
+  }
+  PROJECTS.forEach(init);
+
+  /* ---------- portfolio ---------- */
+  var pf=document.getElementById('pf'),sum=document.getElementById('pf-sum'),sel=PROJECTS[0];
+  function status(p){
+    var aS=p.start,aE=p.start+p.end,late=p.end-p.baseEnd;
+    var cur=p.phases.filter(function(x){return aS+x.start<=TODAY&&TODAY<aS+x.start+x.d;});
+    if(TODAY>=aE)return{t:'Complete',c:'ok'};
+    if(late>0)return{t:'Slipped +'+late+' days',c:'warn'};
+    if(TODAY<aS)return{t:'Starts Wk '+(Math.floor(aS/5)+1),c:''};
+    if(cur.length&&cur.every(function(x){return x.k==='gc';}))return{t:'Waiting on builder',c:'info'};
+    return{t:'On track',c:'ok'};
+  }
+  function progress(p){
+    var tot=0,done=0,rel=TODAY-p.start;
+    p.phases.forEach(function(x){tot+=x.d;done+=Math.max(0,Math.min(x.d,rel-x.start));});
+    return Math.round(done/tot*100);
+  }
+  function lanes(ph){
+    var ends=[],out={};
+    ph.slice().sort(function(a,b){return a.start-b.start;}).forEach(function(x){
+      var l=0;while(ends[l]!=null&&ends[l]>x.start)l++;ends[l]=x.start+x.d;out[x.id]=l;});
+    return{map:out,n:ends.length};
+  }
+  function buildPortfolio(){
+    var h='<div class="pf-head"><div>Project</div><div class="pf-weeks">';
+    for(var w=1;w<=12;w++)h+='<span>Wk '+w+'</span>';
+    h+='</div><div>Status</div></div>';
+    PROJECTS.forEach(function(p){
+      h+='<div class="pf-row" role="button" tabindex="0" data-id="'+p.id+'"><div class="pf-name">'+p.name+'<small>'+TYPE[p.tpl]+' · '+p.client+'</small></div><div class="pf-track" data-track="'+p.id+'"></div><div class="pf-stat"><span class="pill" data-pill="'+p.id+'"></span><div class="prog"><i data-prog="'+p.id+'"></i></div></div></div>';
+    });
+    pf.innerHTML=h;
+    var td=document.createElement('div');td.className='today';
+    td.style.left='calc(264px + (100% - 428px) * '+(TODAY/PSCALE)+')';td.innerHTML='<span>Today</span>';
+    pf.appendChild(td);
+    pf.querySelectorAll('.pf-row').forEach(function(r){
+      function go(){var p=PROJECTS.filter(function(x){return x.id==r.dataset.id;})[0];select(p,true);}
+      r.addEventListener('click',go);
+      r.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+    });
+  }
+  function renderPortfolio(){
+    var active=0,slip=0,wait=0;
+    PROJECTS.forEach(function(p){
+      var tr=pf.querySelector('[data-track="'+p.id+'"]'),L=lanes(p.phases),hgt=L.n>1?12:22,gap=L.n>1?2:0;
+      p.phases.forEach(function(x){
+        var s=tr.querySelector('[data-ph="'+x.id+'"]');
+        if(!s){s=document.createElement('div');s.dataset.ph=x.id;tr.appendChild(s);}
+        var aS=p.start+x.start,aE=aS+x.d;
+        s.className='seg-b k-'+x.k+(aE<=TODAY?' done':'')+(aS<=TODAY&&TODAY<aE?' now':'');
+        s.style.left=(aS/PSCALE*100)+'%';s.style.width='calc('+(x.d/PSCALE*100)+'% - 2px)';
+        var top=(30-(L.n>1?hgt*2+gap:hgt))/2+L.map[x.id]*(hgt+gap);
+        s.style.top=top+'px';s.style.height=hgt+'px';
+        s.title=x.n+' · '+x.d+' day'+(x.d>1?'s':'');
+      });
+      var st=status(p),pl=pf.querySelector('[data-pill="'+p.id+'"]');
+      pl.textContent=st.t;pl.className='pill '+st.c;
+      pf.querySelector('[data-prog="'+p.id+'"]').style.width=progress(p)+'%';
+      pf.querySelector('.pf-row[data-id="'+p.id+'"]').setAttribute('aria-current',p===sel);
+      if(TODAY>=p.start&&TODAY<p.start+p.end)active++;
+      if(st.c==='warn')slip++;
+      if(st.t==='Waiting on builder')wait++;
+    });
+    sum.innerHTML='<span><b>'+PROJECTS.length+'</b>projects</span><span><b>'+active+'</b>in progress today</span><span><b>'+wait+'</b>waiting on builder</span><span class="'+(slip?'w':'')+'"><b>'+slip+'</b>slipped</span>';
+  }
+
+  /* ---------- detail gantt ---------- */
+  var gantt=document.getElementById('gantt'),toast=document.getElementById('toast');
+  function renderDetail(first){
+    var p=sel,end=compute(p.phases);p.end=end;
+    if(first){gantt.innerHTML='<div class="g-today" id="g-today"></div>';}
+    var existing={};gantt.querySelectorAll('.g-row').forEach(function(r){existing[r.dataset.id]=r;});
+    var prev=null,rel=TODAY-p.start;
+    p.phases.forEach(function(x){
+      var row=existing[x.id];
+      if(!row){
+        row=document.createElement('div');row.className='g-row';row.dataset.id=x.id;
+        row.innerHTML='<div class="g-label">'+x.n+'<small></small></div><div class="g-track"><div class="bar k-'+x.k+(x.isNew?' new':'')+'"></div></div>';
+        var at=prev?prev.nextSibling:gantt.querySelector('.g-row');
+        gantt.insertBefore(row,at||null);
+      }
+      prev=row;
+      var bar=row.querySelector('.bar');
+      bar.style.left=(x.start/DSCALE*100)+'%';bar.style.width=(x.d/DSCALE*100)+'%';
+      bar.textContent='D'+(x.start+1)+'–'+(x.start+x.d);
+      bar.classList.toggle('moved',p.base[x.id]!=null&&x.start!==p.base[x.id]);
+      bar.classList.toggle('done',x.start+x.d<=rel);
+      row.querySelector('.g-label small').textContent=x.d+' day'+(x.d>1?'s':'')+(x.k==='gc'?' · builder':'')+(x.delay?' · +'+x.delay+' slip':'');
+    });
+    var tl=document.getElementById('g-today');
+    if(rel>=0&&rel<=DSCALE){tl.style.display='block';tl.style.left='calc(210px + (100% - 210px) * '+(rel/DSCALE)+')';}else{tl.style.display='none';}
+    document.getElementById('g-title').textContent=p.name;
+    document.getElementById('s-client').textContent=p.client;
+    document.getElementById('s-count').textContent=p.phases.length;
+    var se=document.getElementById('s-end');
+    se.textContent='Day '+end+(end!==p.baseEnd?' (was Day '+p.baseEnd+')':'');
+    se.className=end!==p.baseEnd?'late':'';
+  }
+  function select(p,scroll){
+    sel=p;toast.textContent='';renderDetail(true);renderPortfolio();
+    if(scroll){var el=document.getElementById('phases');try{el.scrollIntoView({behavior:reduce?'auto':'smooth'});}catch(e){el.scrollIntoView();}}
+  }
+  function refresh(){renderDetail(false);renderPortfolio();}
+  document.getElementById('b-reset').onclick=function(){init(sel);select(sel,false);};
+  document.getElementById('b-slip').onclick=function(){
+    var g=sel.phases.filter(function(x){return x.gc;})[0];if(!g)return;
+    var before={};sel.phases.forEach(function(x){before[x.id]=x.start;});
+    g.delay=(g.delay||0)+5;refresh();
+    var moved=sel.phases.filter(function(x){return x.start!==before[x.id];}).length;
+    toast.textContent='"'+g.n+'" slipped 5 days. '+moved+' phase'+(moved>1?'s':'')+' rescheduled, and the all-projects view updated.';
+  };
+  document.getElementById('b-add').onclick=function(){
+    if(sel.added){toast.textContent='Re-inspection already added. Press Reset to start over.';return;}
+    var i=-1;sel.phases.forEach(function(x,ix){if(x.insp)i=ix;});if(i<0)return;
+    var insp=sel.phases[i],ni={id:'x',n:'City re-inspection',k:'team',d:2,dep:[insp.id],isNew:true};
+    sel.phases.forEach(function(x){if(x.dep.indexOf(insp.id)>-1){x.dep=x.dep.map(function(d){return d===insp.id?'x':d;});}});
+    sel.phases.splice(i+1,0,ni);sel.added=true;refresh();
+    toast.textContent='Re-inspection inserted after "'+insp.n+'". Everything that depended on it moved.';
+  };
+
+  buildPortfolio();select(PROJECTS[0],false);
+
+  /* ================= Aron edition ================= */
+  function usd(v){return '$'+Math.round(v).toLocaleString('en-US');}
+
+  /* ---------- tabs ---------- */
+  var tabs=document.querySelectorAll('.tabs [role=tab]');
+  function showTab(t){
+    tabs.forEach(function(b){var on=b===t;b.setAttribute('aria-selected',on);document.getElementById(b.getAttribute('aria-controls')).hidden=!on;});
+    if(t.id==='tab-po')poPlay();
+    if(t.id==='tab-kpi')kpiGo();
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){showTab(b);});});
+
+  /* ---------- PO demo ---------- */
+  var PO=[
+    {t:40,h:'<span class="tag2">Step 1 · Pick the phase</span><h4>Park City residence · Tubing &amp; manifold rough-in</h4><p class="note" style="margin:0">Starts Monday · Crew 2 · Builder: example builder</p>'},
+    {t:90,h:'<span class="tag2">Step 2 · Materials from the approved estimate</span><table><tr><td>PEX-AL-PEX tubing 1/2"</td><td class="r">2,400 ft</td></tr><tr><td>Manifold, 8 loops</td><td class="r">4</td></tr><tr><td>Fittings &amp; staples kit</td><td class="r">1</td></tr><tr><td>Pressure test gauge set</td><td class="r">1</td></tr></table>'},
+    {t:160,h:'<span class="tag2">Step 3 · Choose the supplier</span><div class="sup"><div class="pick">Supplier A<small>Last price on this list: $4,318 · in stock</small></div><div>Supplier B<small>Last price on this list: $4,540 · 2 days</small></div></div>'},
+    {t:230,h:'<span class="tag2">Step 4 · Send the PO</span><div class="okmsg"><i>✓</i><div><b>PO TE-1042 sent to Supplier A</b><br><span class="note" style="margin:0">PDF emailed to the supplier · copy saved to the project · synced to QuickBooks</span></div></div>'},
+    {t:280,h:'<span class="tag2">Step 5 · Pickup scheduled</span><div class="okmsg"><i>✓</i><div><b>Ready for pickup tomorrow at 7:00 AM</b><br><span class="note" style="margin:0">Crew 2 notified on their phones with the PO number and the supplier address</span></div></div>'}
+  ];
+  var poTimer=[],poShown=false;
+  function fmt(sec){var m=Math.floor(sec/60),s2=sec%60;return m+':'+(s2<10?'0':'')+s2;}
+  function poPlay(){
+    poTimer.forEach(clearTimeout);poTimer=[];
+    var lis=document.querySelectorAll('#po-steps li'),scr=document.getElementById('po-screen'),tm=document.getElementById('po-time'),bar=document.getElementById('po-bar'),bl=document.getElementById('po-bar-l');
+    lis.forEach(function(l){l.className='';});bar.style.width='0';bl.textContent='0 min';tm.textContent='0:00';
+    var step=reduce?0:1500,prev=0;
+    PO.forEach(function(p,i){
+      poTimer.push(setTimeout(function(){
+        lis.forEach(function(l,j){l.className=j<i?'done':(j===i?'on':'');});
+        scr.innerHTML='<div class="scr">'+p.h+'</div>';
+        var from=prev,to=p.t,k=0;prev=to;
+        var iv=setInterval(function(){k++;var v=Math.round(from+(to-from)*k/12);tm.textContent=fmt(v);if(k>=12)clearInterval(iv);},40);
+        poTimer.push(iv);
+        bar.style.width=(to/3600*100)+'%';bl.textContent=Math.ceil(to/60)+' min';
+        if(i===PO.length-1){lis[i].className='done';}
+      },i*step));
+    });
+  }
+  document.getElementById('po-play').addEventListener('click',poPlay);
+  if('IntersectionObserver' in window){
+    var poo=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&!poShown){poShown=true;poPlay();poo.disconnect();}});},{threshold:.4});
+    poo.observe(document.getElementById('pane-po'));
+  } else { poPlay(); }
+
+  /* ---------- counter-bid demo ---------- */
+  var BID=[
+    {n:'PEX-AL-PEX tubing, 2,400 ft',c:3100,t:3500,f:'',g:''},
+    {n:'Manifolds (4)',c:1600,t:1700,f:'',g:''},
+    {n:'Boiler, 199k BTU',c:6800,t:7600,f:'',g:''},
+    {n:'Snow sensor & controls',c:1200,t:0,f:'miss',g:'Not in their bid. Without it, the system runs manually and wastes gas.'},
+    {n:'Pumps, valves & fittings',c:1900,t:2000,f:'',g:''},
+    {n:'Installation labor (6 crew-days)',c:7200,t:8900,f:'',g:''},
+    {n:'Permit & inspection',c:450,t:0,f:'miss',g:'Not in their bid. The client would pay it separately.'}
+  ];
+  var bm=document.getElementById('bid-m');
+  function bidCalc(){
+    var m=+bm.value/100,ot=0,ct=0,rows='',gaps='';
+    document.getElementById('bid-mo').textContent=bm.value+'%';
+    BID.forEach(function(b){
+      var o=b.c*(1+m);ot+=o;ct+=b.t;var d=o-b.t;
+      var flag=b.t===0?'<span class="flag miss">Missing in theirs</span>':(d<0?'<span class="flag good">You are lower</span>':'<span class="flag">You are higher</span>');
+      rows+='<tr><td>'+b.n+'</td><td class="r num">'+(b.t?usd(b.t):'—')+'</td><td class="r num">'+usd(o)+'</td><td class="r num '+(d>0?'up':'dn')+'">'+(d>0?'+':'−')+usd(Math.abs(d))+'</td><td>'+flag+'</td></tr>';
+      if(b.g)gaps+='<div class="gap"><b>'+b.n+':</b> '+b.g+'</div>';
+    });
+    var miss=BID.filter(function(b){return b.t===0;}).reduce(function(a,b){return a+b.c*(1+m);},0);
+    var same=ot-miss,d=ot-ct;
+    document.getElementById('bid-body').innerHTML=rows;
+    document.getElementById('bid-ct').textContent=usd(ct);
+    document.getElementById('bid-ot').textContent=usd(ot);
+    var dt=document.getElementById('bid-dt');dt.textContent=(d>0?'+':'−')+usd(Math.abs(d));dt.className='r num '+(d>0?'up':'dn');
+    var v=document.getElementById('bid-verdict');
+    v.innerHTML=same<=ct?'<span class="dn">Same scope, you are '+usd(ct-same)+' lower. Show the client what they are missing.</span>':'<span class="up">Same scope, you are '+usd(same-ct)+' higher. Lower the margin or the labor line, or show the missing items.</span>';
+    document.getElementById('bid-gaps').innerHTML=gaps;
+  }
+  bm.addEventListener('input',bidCalc);bidCalc();
+
+  /* ---------- KPI demo ---------- */
+  var kpiDone=false,kpis=document.getElementById('kpis');
+  function kpiGo(){
+    if(kpiDone)return;kpiDone=true;kpis.classList.add('go');
+    kpis.querySelectorAll('b[data-to]').forEach(function(el){
+      var to=+el.dataset.to,pre=el.dataset.pre||'',suf=el.dataset.suf||'',t0=null;
+      if(reduce){return;}
+      function st(ts){if(!t0)t0=ts;var f=Math.min((ts-t0)/1000,1);el.textContent=pre+Math.round(to*(1-Math.pow(1-f,3)))+suf;if(f<1)requestAnimationFrame(st);}
+      requestAnimationFrame(st);
+    });
+  }
+  kpis.querySelectorAll('.kpi').forEach(function(k){
+    k.addEventListener('click',function(){
+      kpis.querySelectorAll('.kpi').forEach(function(x){x.classList.remove('sel');});k.classList.add('sel');
+      document.getElementById('kpi-src').innerHTML='<b>'+k.querySelector('span').textContent+':</b> '+k.dataset.src;
+    });
+  });
+
+  /* ---------- office server scenarios ---------- */
+  var office=document.getElementById('office'),ofm=document.getElementById('of-msg'),ofu=document.getElementById('of-uses');
+  var OF={
+    normal:['uses the live system','Normal day: your team works on the live system. Every hour, an encrypted copy of your data lands on the office server.'],
+    net:['opens the office copy','Office internet is down: your team opens the working copy on the office server, over the office network, and keeps seeing schedules, projects and documents. When the internet is back, they continue on the live system.'],
+    cloud:['switched to the office copy','The cloud is down: we switch your team to the office server, which already has your data from the last hour. When the cloud is back, we move you back. At most, work from the last hour before the outage may need to be entered again.']
+  };
+  function ofSet(k){office.dataset.state=k;ofu.textContent=OF[k][0];ofm.textContent=OF[k][1];
+    office.querySelectorAll('.of-ctrl button').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.s===k);});}
+  office.querySelectorAll('.of-ctrl button').forEach(function(b){b.addEventListener('click',function(){ofSet(b.dataset.s);});});
+  ofSet('normal');
+
+
+
+  /* ---------- reply ---------- */
+  document.getElementById('reply-form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var name=document.getElementById('rf-name').value.trim()||'Aron';
+    var start=document.querySelector('input[name=start]:checked').value;
+    var note=document.getElementById('rf-note').value.trim();
+    var subject='Thermal Engineering: '+(start.indexOf('questions')>-1?'questions about the proposal':'ready to start '+start);
+    var body='Hi Daniel,\n\n'+(start.indexOf('questions')>-1?'I have some questions before we start.':'We would like to start on '+start+'.')+'\n\n'+(note?note+'\n\n':'')+'Thanks,\n'+name;
+    var href='mailto:hello@thedevpro.io?cc=dkalasic@gmail.com&subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+    window.location.href=href;
+    document.getElementById('rf-out').textContent='Your email app should open with the message ready. If it does not, write to hello@thedevpro.io or call 801.376.2721.';
+  });
+
+  /* ---------- alerts feed ---------- */
+  var FEED=[
+    ['Estimate for a Park City residence: no answer in 7 days. Follow up today.','var(--warn)','Estimates'],
+    ['Inspection for tubing rough-in, Summit County: tomorrow 9:00 AM.','var(--ice)','Inspections'],
+    ['Builder moved the pour 5 days. 3 phases rescheduled, crews notified.','var(--warn)','Schedule'],
+    ['Startup phase finished in Bountiful. Progress invoice ready to send.','var(--ok)','Billing'],
+    ['14 snowmelt systems due for a tune-up before December 1.','var(--ember)','Service'],
+    ['Emergency call: Crew 3 pulled to a boiler repair. Office TI moves 1 day.','var(--warn)','24/7'],
+    ['PO TE-1042 picked up. Materials on site for Monday.','var(--ok)','POs'],
+    ['Warranty for a boiler installed 2024 expires in 30 days.','var(--ice)','Warranty']
+  ];
+  var feed=document.getElementById('feed'),fi=0,feedOn=false;
+  function feedPush(){
+    var f=FEED[fi%FEED.length];fi++;
+    var li=document.createElement('li');li.style.setProperty('--c',f[1]);
+    li.innerHTML='<span>'+f[0]+'</span><small>'+f[2]+'</small>';
+    feed.insertBefore(li,feed.firstChild);
+    while(feed.children.length>5)feed.removeChild(feed.lastChild);
+  }
+  for(var q=0;q<4;q++)feedPush();
+  if(!reduce&&'IntersectionObserver' in window){
+    var fo=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting&&!feedOn){feedOn=true;feed._t=setInterval(feedPush,2600);}
+      else if(!e.isIntersecting&&feedOn){feedOn=false;clearInterval(feed._t);}
+    });},{threshold:.2});
+    fo.observe(feed);
+  }
+
+  /* ---------- ask your business ---------- */
+  var QA=[["Which projects are behind this week?", "2 of 12. <b>Park City residence</b>: the builder moved the pour 5 days, new finish Dec 4. <b>Office TI</b>: inspection moved to Thursday. Everything else is on track."], ["Which estimates need a follow-up?", "<b>4 estimates</b> over 7 days without an answer, worth <b>$96,000</b>. The largest is radiant + boiler in Heber, $41,500."], ["How much did we bill in October?", "<b>$212,400</b> across 9 projects. 3 phases are finished but not invoiced yet: <b>$18,600</b> ready to send."], ["How busy are the crews next week?", "Crews 1 and 2 are full. <b>Crew 3 has 2 open days</b> (Wed\u2013Thu), a good fit for snowmelt tune-ups."], ["Which snowmelt clients need a tune-up?", "<b>14 systems</b> before Dec 1. 6 haven't been called yet. The call list is ready to share with the office."]];
+  var chat=document.getElementById('ph-chat'),typing=document.getElementById('ph-typing'),askBusy=false,askT=[];
+  function ask(i){
+    if(askBusy)return;askBusy=true;
+    document.querySelectorAll('.ask-chip').forEach(function(c){c.classList.toggle('sel',+c.dataset.i===i);});
+    var q=QA[i][0],a=QA[i][1],k=0;
+    function done(){askBusy=false;}
+    function send(){
+      typing.textContent='Ask your business…';
+      chat.insertAdjacentHTML('beforeend','<div class="msg q">'+q+'</div><div class="msg a dots"><i></i><i></i><i></i></div>');
+      while(chat.children.length>4)chat.removeChild(chat.firstChild);
+      setTimeout(function(){var d=chat.querySelector('.dots');if(d){d.className='msg a';d.innerHTML=a;}done();},reduce?0:1100);
+    }
+    if(reduce){send();return;}
+    var iv=setInterval(function(){k+=2;typing.textContent=q.slice(0,k);if(k>=q.length){clearInterval(iv);setTimeout(send,250);}},30);
+  }
+  document.querySelectorAll('.ask-chip').forEach(function(c){c.addEventListener('click',function(){ask(+c.dataset.i);});});
+  chat.insertAdjacentHTML('beforeend','<div class="msg q">'+QA[0][0]+'</div><div class="msg a">'+QA[0][1]+'</div>');
+  if(!reduce&&'IntersectionObserver' in window){
+    var ao=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){ao.disconnect();setTimeout(function(){ask(1);},900);}});},{threshold:.5});
+    ao.observe(document.querySelector('.phone'));
+  }
+
+  /* ---------- margin calculator ---------- */
+  var mcr=document.getElementById('mc-rev'),mcp=document.getElementById('mc-pts');
+  function mcCalc(){
+    var r=+mcr.value,p=+mcp.value,v=r*1e6*p/100;
+    document.getElementById('mc-revo').textContent='$'+r+'M';
+    document.getElementById('mc-ptso').textContent='+'+p+' pts';
+    document.getElementById('mc-res').textContent='$'+Math.round(v).toLocaleString('en-US');
+    document.getElementById('mc-sub').textContent='That is $'+Math.round(v/12).toLocaleString('en-US')+' a month, every month.';
+  }
+  mcr.addEventListener('input',mcCalc);mcp.addEventListener('input',mcCalc);mcCalc();
+
+  var mx=document.getElementById('mnote-x');if(mx)mx.addEventListener('click',function(){document.getElementById('mobile-note').classList.add('hide');});
+  /* ---------- count-up ---------- */
+  document.querySelectorAll('[data-count]').forEach(function(el){
+    if(reduce||!('IntersectionObserver' in window))return;
+    var o=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;o.disconnect();
+      var to=+el.dataset.count,suf=el.dataset.suffix||'',t0=null;
+      function step(ts){if(!t0)t0=ts;var f=Math.min((ts-t0)/1100,1);el.textContent=Math.round(to*(1-Math.pow(1-f,3)))+(f>.6?suf:'');if(f<1)requestAnimationFrame(step);}
+      requestAnimationFrame(step);});},{threshold:.6});
+    o.observe(el);
+  });
+
+  /* ---------- portfolio grow-in ---------- */
+  if(!reduce&&'IntersectionObserver' in window){
+    var po=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;po.disconnect();
+      var segs=pf.querySelectorAll('.seg-b'),w=[];
+      segs.forEach(function(sg,i){w[i]=sg.style.width;sg.style.transition='none';sg.style.width='0';});
+      pf.offsetWidth;
+      segs.forEach(function(sg,i){sg.style.transition='';sg.style.transitionDelay=(i%9)*0.05+'s';sg.style.width=w[i];});
+      setTimeout(function(){segs.forEach(function(sg){sg.style.transitionDelay='';});},1600);
+    });},{threshold:.3});
+    po.observe(pf);
+  }
+
+  /* ---------- roadmap progress ---------- */
+  var road=document.getElementById('road'),fill=document.getElementById('road-fill'),steps=road.querySelectorAll('.step');
+  function roadScroll(){
+    var r=road.getBoundingClientRect(),vh=window.innerHeight,mid=vh*0.6;
+    var f=Math.max(0,Math.min(1,(mid-r.top)/r.height));fill.style.height=(f*100)+'%';
+    steps.forEach(function(st){st.classList.toggle('lit',st.getBoundingClientRect().top+28<mid);});
+  }
+  window.addEventListener('scroll',roadScroll,{passive:true});roadScroll();
+
+
+})();
+</script>
+</body>
+</html>
