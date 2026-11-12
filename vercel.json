@@ -4,7 +4,7 @@
   "trailingSlash": true,
   "headers": [
     {
-      "source": "/((?!$|ai/|ai$|services/|services$|work/|work$|process/|process$|about/|about$|contact/|contact$|assets/|favicon\\.png|robots\\.txt|sitemap\\.xml).*)",
+      "source": "/((?!$|ai/|ai$|services/|services$|work/|work$|process/|process$|about/|about$|contact/|contact$|assets/|favicon\\.png|favicon\\.ico|favicon\\.svg|apple-touch-icon\\.png|robots\\.txt|sitemap\\.xml).*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
